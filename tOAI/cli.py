@@ -18,21 +18,16 @@ def main():
     parser.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
     
-    # Create subparsers for commands
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    # Mode flags (mutually exclusive)
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands (Experimental)')
+    mode_group.add_argument('-c', '--code', action='store_true', help='Generate code (Experimental)')
     
-    # Chat command
-    chat_parser = subparsers.add_parser('chat', help='Chat with the AI model')
-    chat_parser.add_argument('prompt', nargs='?', default=None, help='The prompt to send')
+    # Language option for code mode
+    parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
     
-    # Shell command
-    shell_parser = subparsers.add_parser('shell', help='Generate and execute shell commands (Experimental)')
-    shell_parser.add_argument('prompt', help='Description of the shell command to generate')
-    
-    # Code command
-    code_parser = subparsers.add_parser('code', help='Generate code (Experimental)')
-    code_parser.add_argument('prompt', help='Description of the code to generate')
-    code_parser.add_argument('--language', default="python", help='Programming language to generate code in')
+    # Prompt argument
+    parser.add_argument('prompt', nargs='?', default=None, help='The prompt to send')
     
     args = parser.parse_args()
     
@@ -44,16 +39,15 @@ def main():
         model=args.model
     )
     
-    # Handle commands
-    if args.command == 'chat':
-        prompt = args.prompt
-        if prompt is None:
-            print("Enter your prompt: ", end='')
+    # Handle modes
+    if args.shell:
+        if args.prompt is None:
+            print("Enter shell command description: ", end='')
             prompt = input()
-        client.chat(prompt, web_search=args.web_search)
-        
-    elif args.command == 'shell':
-        command = client.generate_shell_command(args.prompt, web_search=args.web_search)
+        else:
+            prompt = args.prompt
+            
+        command = client.generate_shell_command(prompt, web_search=args.web_search)
         print(f"\nGenerated command: {command}")
         
         print("Do you want to execute this command? [y/N] ", end='')
@@ -66,12 +60,24 @@ def main():
             except subprocess.CalledProcessError as e:
                 print(f"\nError:\n{e.stderr}")
                 
-    elif args.command == 'code':
-        generated_code = client.generate_code(args.prompt, args.language, web_search=args.web_search)
+    elif args.code:
+        if args.prompt is None:
+            print("Enter code description: ", end='')
+            prompt = input()
+        else:
+            prompt = args.prompt
+            
+        generated_code = client.generate_code(prompt, args.language, web_search=args.web_search)
         print(f"\nGenerated code:\n{generated_code}")
         
     else:
-        parser.print_help()
+        # Default to chat mode
+        if args.prompt is None:
+            print("Enter your prompt: ", end='')
+            prompt = input()
+        else:
+            prompt = args.prompt
+        client.chat(prompt, web_search=args.web_search)
         
 if __name__ == "__main__":
     main() 
