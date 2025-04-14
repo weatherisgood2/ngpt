@@ -24,20 +24,23 @@ pip install tOAI
 ### As a CLI Tool
 
 ```bash
-# Basic chat
-tOAI chat "Hello, how are you?"
+# Basic chat (default mode)
+tOAI "Hello, how are you?"
+
+# Show version information
+tOAI -v
 
 # With custom options
-tOAI --api-key your-key --base-url http://your-endpoint chat "Hello"
+tOAI --api-key your-key --base-url http://your-endpoint "Hello"
 
 # Enable web search (if your API endpoint supports it)
-tOAI --web-search chat "What's the latest news about AI?"
+tOAI --web-search "What's the latest news about AI?"
 
-# Generate and execute shell commands
-tOAI shell "list all files in current directory"
+# Generate and execute shell commands (using -s or --shell flag)
+tOAI -s "list all files in current directory"
 
-# Generate code
-tOAI code "create a python function that calculates fibonacci numbers"
+# Generate code (using -c or --code flag)
+tOAI -c "create a python function that calculates fibonacci numbers"
 ```
 
 ### As a Library
@@ -50,7 +53,7 @@ client = TOAIClient(
     api_key="your-key",
     base_url="http://your-endpoint",
     provider="openai",
-    model="Claude-sonnet-3.7"
+    model="o3-mini"
 )
 
 # Chat
@@ -103,4 +106,4 @@ This library uses direct HTTP requests instead of the OpenAI client library, all
 
 ## License
 
-MIT 
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
