@@ -3,12 +3,16 @@ import sys
 import os
 from dotenv import load_dotenv
 from .client import TOAIClient
+from . import __version__
 
 # Load environment variables from .env file
 load_dotenv()
 
 def main():
     parser = argparse.ArgumentParser(description="tOAI - A CLI tool for interacting with custom OpenAI API endpoints")
+    
+    # Version flag
+    parser.add_argument('-v', '--version', action='version', version=f'tOAI {__version__}', help='Show version information and exit')
     
     # Global options
     parser.add_argument('--api-key', default=os.getenv("OPENAI_API_KEY"), help='API key for the service')
