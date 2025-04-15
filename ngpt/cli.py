@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-from .client import TOAIClient
+from .client import NGPTClient
 from .config import load_config, get_config_path
 from . import __version__
 
@@ -10,11 +10,11 @@ def show_config_help():
     print("\nConfiguration Help:")
     print("  1. Create a config file at one of these locations:")
     if sys.platform == "win32":
-        print(f"     - %APPDATA%\\tOAI\\tOAI.conf")
+        print(f"     - %APPDATA%\\ngpt\\ngpt.conf")
     elif sys.platform == "darwin":
-        print(f"     - ~/Library/Application Support/tOAI/tOAI.conf")
+        print(f"     - ~/Library/Application Support/ngpt/ngpt.conf")
     else:
-        print(f"     - ~/.config/tOAI/tOAI.conf")
+        print(f"     - ~/.config/ngpt/ngpt.conf")
     
     print("  2. Format your config file as JSON:")
     print("""     {
@@ -31,7 +31,7 @@ def show_config_help():
     print("     - OPENAI_MODEL")
     
     print("  4. Or provide command line arguments:")
-    print("     tOAI --api-key your-key --base-url https://api.example.com \"Your prompt\"")
+    print("     ngpt --api-key your-key --base-url https://api.example.com \"Your prompt\"")
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
@@ -48,10 +48,10 @@ def check_config(config):
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="tOAI - A CLI tool for interacting with custom OpenAI API endpoints")
+    parser = argparse.ArgumentParser(description="nGPT - A CLI tool for interacting with custom OpenAI API endpoints")
     
     # Version flag
-    parser.add_argument('-v', '--version', action='version', version=f'tOAI {__version__}', help='Show version information and exit')
+    parser.add_argument('-v', '--version', action='version', version=f'nGPT {__version__}', help='Show version information and exit')
     
     # Config option
     parser.add_argument('--config', help='Path to a custom configuration file')
@@ -111,7 +111,7 @@ def main():
         return
     
     # Initialize client
-    client = TOAIClient(**config)
+    client = NGPTClient(**config)
     
     try:
         # Handle modes

@@ -5,7 +5,7 @@ import requests
 import platform
 import subprocess
 
-class TOAIClient:
+class NGPTClient:
     def __init__(
         self,
         api_key: str = "",

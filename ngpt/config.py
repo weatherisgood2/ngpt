@@ -16,17 +16,17 @@ def get_config_dir() -> Path:
     """Get the appropriate config directory based on OS."""
     if sys.platform == "win32":
         # Windows
-        config_dir = Path(os.environ.get("APPDATA", "")) / "tOAI"
+        config_dir = Path(os.environ.get("APPDATA", "")) / "ngpt"
     elif sys.platform == "darwin":
         # macOS
-        config_dir = Path.home() / "Library" / "Application Support" / "tOAI"
+        config_dir = Path.home() / "Library" / "Application Support" / "ngpt"
     else:
         # Linux and other Unix-like systems
         xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
         if xdg_config_home:
-            config_dir = Path(xdg_config_home) / "tOAI"
+            config_dir = Path(xdg_config_home) / "ngpt"
         else:
-            config_dir = Path.home() / ".config" / "tOAI"
+            config_dir = Path.home() / ".config" / "ngpt"
     
     # Ensure the directory exists
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -36,7 +36,7 @@ def get_config_path(custom_path: Optional[str] = None) -> Path:
     """Get the path to the config file."""
     if custom_path:
         return Path(custom_path)
-    return get_config_dir() / "tOAI.conf"
+    return get_config_dir() / "ngpt.conf"
 
 def create_default_config(config_path: Path) -> None:
     """Create a default configuration file."""

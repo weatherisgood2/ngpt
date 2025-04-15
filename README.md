@@ -1,4 +1,4 @@
-# tOAI
+# nGPT
 
 A lightweight Python CLI and library for interacting with custom OpenAI API endpoints.
 
@@ -17,7 +17,7 @@ A lightweight Python CLI and library for interacting with custom OpenAI API endp
 ## Installation
 
 ```bash
-pip install tOAI
+pip install ngpt
 ```
 
 ## Usage
@@ -26,37 +26,37 @@ pip install tOAI
 
 ```bash
 # Basic chat (default mode)
-tOAI "Hello, how are you?"
+ngpt "Hello, how are you?"
 
 # Show version information
-tOAI -v
+ngpt -v
 
 # With custom options
-tOAI --api-key your-key --base-url http://your-endpoint "Hello"
+ngpt --api-key your-key --base-url http://your-endpoint "Hello"
 
 # Enable web search (if your API endpoint supports it)
-tOAI --web-search "What's the latest news about AI?"
+ngpt --web-search "What's the latest news about AI?"
 
 # Generate and execute shell commands (using -s or --shell flag)
-tOAI -s "list all files in current directory"
+ngpt -s "list all files in current directory"
 
 # Generate code (using -c or --code flag)
-tOAI -c "create a python function that calculates fibonacci numbers"
+ngpt -c "create a python function that calculates fibonacci numbers"
 ```
 
 ### As a Library
 
 ```python
-from tOAI import TOAIClient, load_config
+from ngpt import NGPTClient, load_config
 
 # Load from config file
 config = load_config()
 
 # Initialize the client with config
-client = TOAIClient(**config)
+client = NGPTClient(**config)
 
 # Or initialize with custom parameters
-client = TOAIClient(
+client = NGPTClient(
     api_key="your-key",
     base_url="http://your-endpoint",
     provider="openai",
@@ -91,11 +91,11 @@ You can configure the client using the following options:
 
 ### Configuration File
 
-tOAI uses a configuration file stored in the standard user config directory for your operating system:
+nGPT uses a configuration file stored in the standard user config directory for your operating system:
 
-- **Linux**: `~/.config/tOAI/tOAI.conf` or `$XDG_CONFIG_HOME/tOAI/tOAI.conf`
-- **macOS**: `~/Library/Application Support/tOAI/tOAI.conf`
-- **Windows**: `%APPDATA%\tOAI\tOAI.conf`
+- **Linux**: `~/.config/ngpt/ngpt.conf` or `$XDG_CONFIG_HOME/ngpt/ngpt.conf`
+- **macOS**: `~/Library/Application Support/ngpt/ngpt.conf`
+- **Windows**: `%APPDATA%\ngpt\ngpt.conf`
 
 The configuration file uses JSON format:
 
@@ -121,7 +121,7 @@ The configuration file uses JSON format:
 
 ### Configuration Priority
 
-tOAI determines configuration values in the following order (highest priority first):
+nGPT determines configuration values in the following order (highest priority first):
 
 1. Command line arguments
 2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_PROVIDER`, `OPENAI_MODEL`)

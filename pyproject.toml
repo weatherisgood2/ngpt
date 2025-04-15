@@ -1,6 +1,6 @@
 [project]
-name = "tOAI"
-version = "0.3.0"
+name = "ngpt"
+version = "1.0.0"
 description = "A Python CLI and library for interacting with custom OpenAI API endpoints"
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
@@ -13,7 +13,7 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-tOAI = "tOAI.cli:main"
+ngpt = "ngpt.cli:main"
 
 [build-system]
 requires = ["hatchling"]
