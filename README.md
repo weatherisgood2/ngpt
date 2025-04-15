@@ -1,6 +1,6 @@
 # nGPT
 
-A lightweight Python CLI and library for interacting with custom OpenAI API endpoints.
+A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints.
 
 ## Features
 
