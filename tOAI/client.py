@@ -4,18 +4,14 @@ import json
 import requests
 import platform
 import subprocess
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 class TOAIClient:
     def __init__(
         self,
-        api_key: str = os.getenv("OPENAI_API_KEY"),
-        base_url: str = os.getenv("OPENAI_BASE_URL"),
-        provider: str = os.getenv("OPENAI_PROVIDER"),
-        model: str = os.getenv("OPENAI_MODEL")
+        api_key: str = "",
+        base_url: str = "https://api.openai.com/v1/",
+        provider: str = "OpenAI",
+        model: str = "gpt-3.5-turbo"
     ):
         self.api_key = api_key
         # Ensure base_url ends with /
@@ -54,6 +50,10 @@ class TOAIClient:
         Returns:
             The generated response as a string
         """
+        if not self.api_key:
+            print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
+            return ""
+            
         if messages is None:
             messages = [{"role": "user", "content": prompt}]
         
@@ -78,48 +78,76 @@ class TOAIClient:
         endpoint = "chat/completions"
         url = f"{self.base_url}{endpoint}"
         
-        if not stream:
-            # Regular request
-            response = requests.post(url, headers=self.headers, json=payload)
-            response.raise_for_status()  # Raise exception for HTTP errors
-            result = response.json()
-            
-            # Extract content from response
-            if "choices" in result and len(result["choices"]) > 0:
-                return result["choices"][0]["message"]["content"]
-            return ""
-        else:
-            # Streaming request
-            collected_content = ""
-            with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
+        try:
+            if not stream:
+                # Regular request
+                response = requests.post(url, headers=self.headers, json=payload)
                 response.raise_for_status()  # Raise exception for HTTP errors
+                result = response.json()
                 
-                for line in response.iter_lines():
-                    if not line:
-                        continue
-                        
-                    # Handle SSE format
-                    line = line.decode('utf-8')
-                    if line.startswith('data: '):
-                        line = line[6:]  # Remove 'data: ' prefix
-                        
-                        # Skip keep-alive lines
-                        if line == "[DONE]":
-                            break
+                # Extract content from response
+                if "choices" in result and len(result["choices"]) > 0:
+                    return result["choices"][0]["message"]["content"]
+                return ""
+            else:
+                # Streaming request
+                collected_content = ""
+                with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
+                    response.raise_for_status()  # Raise exception for HTTP errors
+                    
+                    for line in response.iter_lines():
+                        if not line:
+                            continue
                             
-                        try:
-                            chunk = json.loads(line)
-                            if "choices" in chunk and len(chunk["choices"]) > 0:
-                                delta = chunk["choices"][0].get("delta", {})
-                                content = delta.get("content", "")
-                                if content:
-                                    print(content, end="", flush=True)
-                                    collected_content += content
-                        except json.JSONDecodeError:
-                            pass  # Skip invalid JSON
+                        # Handle SSE format
+                        line = line.decode('utf-8')
+                        if line.startswith('data: '):
+                            line = line[6:]  # Remove 'data: ' prefix
+                            
+                            # Skip keep-alive lines
+                            if line == "[DONE]":
+                                break
+                                
+                            try:
+                                chunk = json.loads(line)
+                                if "choices" in chunk and len(chunk["choices"]) > 0:
+                                    delta = chunk["choices"][0].get("delta", {})
+                                    content = delta.get("content", "")
+                                    if content:
+                                        print(content, end="", flush=True)
+                                        collected_content += content
+                            except json.JSONDecodeError:
+                                pass  # Skip invalid JSON
+                
+                print()  # Add a final newline
+                return collected_content
+                
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                print("Error: Authentication failed. Please check your API key.")
+            elif e.response.status_code == 404:
+                print(f"Error: Endpoint not found at {url}")
+            elif e.response.status_code == 429:
+                print("Error: Rate limit exceeded. Please try again later.")
+            else:
+                print(f"HTTP Error: {e}")
+            return ""
             
-            print()  # Add a final newline
-            return collected_content
+        except requests.exceptions.ConnectionError:
+            print(f"Error: Could not connect to {self.base_url}. Please check your internet connection and base URL.")
+            return ""
+            
+        except requests.exceptions.Timeout:
+            print("Error: Request timed out. Please try again later.")
+            return ""
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error: An error occurred while making the request: {e}")
+            return ""
+            
+        except Exception as e:
+            print(f"Error: An unexpected error occurred: {e}")
+            return ""
 
     def generate_shell_command(self, prompt: str, web_search: bool = False) -> str:
         """
@@ -132,6 +160,11 @@ class TOAIClient:
         Returns:
             The generated shell command
         """
+        # Check for API key first
+        if not self.api_key:
+            print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
+            return ""
+            
         # Determine OS type
         os_type = platform.system()
         if os_type == "Darwin":
@@ -165,12 +198,16 @@ Command:"""
             {"role": "user", "content": prompt}
         ]
         
-        return self.chat(
-            prompt=prompt,
-            stream=False,
-            messages=messages,
-            web_search=web_search
-        )
+        try:
+            return self.chat(
+                prompt=prompt,
+                stream=False,
+                messages=messages,
+                web_search=web_search
+            )
+        except Exception as e:
+            print(f"Error generating shell command: {e}")
+            return ""
 
     def generate_code(self, prompt: str, language: str = "python", web_search: bool = False) -> str:
         """
@@ -184,6 +221,11 @@ Command:"""
         Returns:
             The generated code
         """
+        # Check for API key first
+        if not self.api_key:
+            print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
+            return ""
+            
         system_prompt = f"""Your Role: Provide only code as output without any description.
 IMPORTANT: Provide only plain text without Markdown formatting.
 IMPORTANT: Do not include markdown formatting.
@@ -199,9 +241,13 @@ Code:"""
             {"role": "user", "content": prompt}
         ]
         
-        return self.chat(
-            prompt=prompt,
-            stream=False,
-            messages=messages,
-            web_search=web_search
-        ) 
+        try:
+            return self.chat(
+                prompt=prompt,
+                stream=False,
+                messages=messages,
+                web_search=web_search
+            )
+        except Exception as e:
+            print(f"Error generating code: {e}")
+            return "" 

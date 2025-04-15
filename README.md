@@ -9,6 +9,7 @@ A lightweight Python CLI and library for interacting with custom OpenAI API endp
 - Customizable API endpoints and providers
 - Streaming responses
 - Web search capability (supported by compatible API endpoints)
+- Cross-platform configuration system
 - Experimental features:
   - Shell command generation and execution (OS-aware)
   - Code generation with clean output
@@ -46,9 +47,15 @@ tOAI -c "create a python function that calculates fibonacci numbers"
 ### As a Library
 
 ```python
-from tOAI import TOAIClient
+from tOAI import TOAIClient, load_config
 
-# Initialize the client
+# Load from config file
+config = load_config()
+
+# Initialize the client with config
+client = TOAIClient(**config)
+
+# Or initialize with custom parameters
 client = TOAIClient(
     api_key="your-key",
     base_url="http://your-endpoint",
@@ -71,6 +78,8 @@ code = client.generate_code("create a python function that calculates fibonacci 
 
 ## Configuration
 
+### Command Line Options
+
 You can configure the client using the following options:
 
 - `--api-key`: API key for the service
@@ -78,17 +87,46 @@ You can configure the client using the following options:
 - `--provider`: Provider name
 - `--model`: Model to use
 - `--web-search`: Enable web search capability (Note: Your API endpoint must support this feature)
+- `--config`: Path to a custom configuration file
 
-## Environment Variables
+### Configuration File
 
-The following environment variables can be set in a `.env` file:
+tOAI uses a configuration file stored in the standard user config directory for your operating system:
 
+- **Linux**: `~/.config/tOAI/tOAI.conf` or `$XDG_CONFIG_HOME/tOAI/tOAI.conf`
+- **macOS**: `~/Library/Application Support/tOAI/tOAI.conf`
+- **Windows**: `%APPDATA%\tOAI\tOAI.conf`
+
+The configuration file uses JSON format:
+
+#### OpenAI API Example
+```json
+{
+  "api_key": "your_openai_api_key_here",
+  "base_url": "https://api.openai.com/v1/",
+  "provider": "OpenAI",
+  "model": "gpt-3.5-turbo"
+}
 ```
-OPENAI_API_KEY=your_api_key_here
-OPENAI_BASE_URL=http://127.0.0.1:1337/v1/
-OPENAI_PROVIDER=Blackbox
-OPENAI_MODEL=Claude-sonnet-3.7
+
+#### Custom Endpoint Example
+```json
+{
+  "api_key": "your_api_key_here",
+  "base_url": "http://127.0.0.1:1337/v1/",
+  "provider": "Blackbox",
+  "model": "DeepSeek-V3"
+}
 ```
+
+### Configuration Priority
+
+tOAI determines configuration values in the following order (highest priority first):
+
+1. Command line arguments
+2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_PROVIDER`, `OPENAI_MODEL`)
+3. Configuration file
+4. Default values
 
 ## Special Features
 
