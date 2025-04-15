@@ -66,8 +66,8 @@ def main():
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands (Experimental)')
-    mode_group.add_argument('-c', '--code', action='store_true', help='Generate code (Experimental)')
+    mode_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
+    mode_group.add_argument('-c', '--code', action='store_true', help='Generate code')
     mode_group.add_argument('--show-config', action='store_true', help='Show the current configuration and exit')
     
     # Language option for code mode
