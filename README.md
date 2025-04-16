@@ -1,24 +1,58 @@
 # nGPT
 
+[![PyPI version](https://img.shields.io/pypi/v/ngpt.svg)](https://pypi.org/project/ngpt/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
+
 A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints.
+
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [CLI Tool](#as-a-cli-tool)
+  - [Python Library](#as-a-library)
+- [Configuration](#configuration)
+  - [Command Line Options](#command-line-options)
+  - [Configuration File](#configuration-file)
+  - [Configuration Priority](#configuration-priority)
+- [License](#license)
+
+## Quick Start
+
+```bash
+# Install
+pip install ngpt
+
+# Chat with default settings
+ngpt "Tell me about quantum computing"
+
+# Generate code
+ngpt --code "function to calculate the Fibonacci sequence"
+
+# Generate and execute shell commands
+ngpt --shell "list all files in the current directory"
+```
 
 ## Features
 
-- Dual mode: Use as a CLI tool or import as a library
-- Minimal dependencies
-- Customizable API endpoints and providers
-- Streaming responses
-- Web search capability (supported by compatible API endpoints)
-- Cross-platform configuration system
-- Experimental features:
-  - Shell command generation and execution (OS-aware)
-  - Code generation with clean output
+- ✅ **Dual Mode**: Use as a CLI tool or import as a Python library
+- 🪶 **Lightweight**: Minimal dependencies (just `requests`)
+- 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, and any compatible endpoint
+- 📊 **Streaming Responses**: Real-time output for better user experience
+- 🔍 **Web Search**: Integrated with compatible API endpoints
+- ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
+- 💻 **Shell Command Generation**: OS-aware command execution
+- 🧩 **Clean Code Generation**: Output code without markdown or explanations
 
 ## Installation
 
 ```bash
 pip install ngpt
 ```
+
+Requires Python 3.8 or newer.
 
 ## Usage
 
@@ -44,9 +78,13 @@ ngpt --api-key your-key --base-url http://your-endpoint --model your-model "Hell
 ngpt --web-search "What's the latest news about AI?"
 
 # Generate and execute shell commands (using -s or --shell flag)
+# OS-aware: generates appropriate commands for Windows, macOS, or Linux
 ngpt -s "list all files in current directory"
+# On Windows generates: dir
+# On Linux/macOS generates: ls -la
 
-# Generate code (using -c or --code flag)
+# Generate clean code (using -c or --code flag)
+# Returns only code without markdown formatting or explanations
 ngpt -c "create a python function that calculates fibonacci numbers"
 ```
 
@@ -82,20 +120,51 @@ command = client.generate_shell_command("list all files")
 code = client.generate_code("create a python function that calculates fibonacci numbers")
 ```
 
+#### Advanced Library Usage
+
+```python
+# Stream responses
+for chunk in client.chat("Write a poem about Python", stream=True):
+    print(chunk, end="", flush=True)
+
+# Customize system prompt
+response = client.chat(
+    "Explain quantum computing",
+    system_prompt="You are a quantum physics professor. Explain complex concepts simply."
+)
+
+# OS-aware shell commands
+# Automatically generates appropriate commands for the current OS
+command = client.generate_shell_command("find large files")
+import subprocess
+result = subprocess.run(command, shell=True, capture_output=True, text=True)
+print(result.stdout)
+
+# Clean code generation
+# Returns only code without markdown or explanations
+code = client.generate_code("function that converts Celsius to Fahrenheit")
+print(code)
+```
+
 ## Configuration
 
 ### Command Line Options
 
 You can configure the client using the following options:
 
-- `--api-key`: API key for the service
-- `--base-url`: Base URL for the API
-- `--model`: Model to use
-- `--web-search`: Enable web search capability (Note: Your API endpoint must support this feature)
-- `--config`: Path to a custom configuration file
-- `--config-index`: Index of the configuration to use from the config file (default: 0)
-- `--show-config`: Show configuration details and exit.
-- `--all`: Used with `--show-config` to display details for all configurations.
+| Option | Description |
+|--------|-------------|
+| `--api-key` | API key for the service |
+| `--base-url` | Base URL for the API |
+| `--model` | Model to use |
+| `--web-search` | Enable web search capability |
+| `--config` | Path to a custom configuration file |
+| `--config-index` | Index of the configuration to use (default: 0) |
+| `--show-config` | Show configuration details and exit |
+| `--all` | Used with `--show-config` to display all configurations |
+| `-s, --shell` | Generate and execute shell commands |
+| `-c, --code` | Generate clean code output |
+| `-v, --version` | Show version information |
 
 ### Configuration File
 
@@ -139,20 +208,6 @@ nGPT determines configuration values in the following order (highest priority fi
 2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`)
 3. Configuration file (selected by `--config-index`, defaults to index 0)
 4. Default values
-
-## Special Features
-
-### OS-Aware Shell Commands
-
-Shell command generation is OS-aware, providing appropriate commands for your operating system (Windows, macOS, or Linux) and shell type (bash, powershell, etc.).
-
-### Clean Code Generation
-
-Code generation uses an improved prompt that ensures only clean code is returned, without markdown formatting or unnecessary explanations.
-
-## Implementation Notes
-
-This library uses direct HTTP requests instead of the OpenAI client library, allowing it to work with custom API endpoints that support additional parameters like `provider` and `web_search`. All parameters are sent directly in the request body, similar to the format shown in the curl example.
 
 ## License
 
