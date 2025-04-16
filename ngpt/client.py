@@ -10,13 +10,12 @@ class NGPTClient:
         self,
         api_key: str = "",
         base_url: str = "https://api.openai.com/v1/",
-        provider: str = "OpenAI",
+        provider: str = "OpenAI",  # Provider is now just a label, kept for potential future use/logging
         model: str = "gpt-3.5-turbo"
     ):
         self.api_key = api_key
         # Ensure base_url ends with /
         self.base_url = base_url if base_url.endswith('/') else base_url + '/'
-        self.provider = provider
         self.model = model
         
         # Default headers
@@ -63,9 +62,11 @@ class NGPTClient:
             "messages": messages,
             "stream": stream,
             "temperature": temperature,
-            "provider": self.provider,
-            "web_search": web_search
         }
+        
+        # Conditionally add web_search
+        if web_search:
+            payload["web_search"] = True
         
         # Add max_tokens if provided
         if max_tokens is not None:
