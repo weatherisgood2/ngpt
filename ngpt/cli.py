@@ -38,7 +38,7 @@ def show_config_help():
     print("     - OPENAI_MODEL")
     
     print("  4. Or provide command line arguments:")
-    print("     ngpt --api-key your-key --base-url https://api.example.com \"Your prompt\"")
+    print("     ngpt --api-key your-key --base-url https://api.example.com --model your-model \"Your prompt\"")
     
     print("  5. Use --config-index to specify which configuration to use:")
     print("     ngpt --config-index 1 \"Your prompt\"")

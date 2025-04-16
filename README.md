@@ -38,7 +38,7 @@ ngpt --show-config
 ngpt --show-config --all
 
 # With custom options
-ngpt --api-key your-key --base-url http://your-endpoint "Hello"
+ngpt --api-key your-key --base-url http://your-endpoint --model your-model "Hello"
 
 # Enable web search (if your API endpoint supports it)
 ngpt --web-search "What's the latest news about AI?"
