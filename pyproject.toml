@@ -1,12 +1,12 @@
 [project]
 name = "ngpt"
-version = "1.0.0"
+version = "1.1.0"
 description = "A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
 ]
 dependencies = [
-    "requests>=2.28.0",
+    "requests>=2.31.0",
 ]
 requires-python = ">=3.8"
 readme = "README.md"
