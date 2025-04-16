@@ -82,43 +82,51 @@ class NGPTClient:
         try:
             if not stream:
                 # Regular request
-                response = requests.post(url, headers=self.headers, json=payload)
-                response.raise_for_status()  # Raise exception for HTTP errors
-                result = response.json()
-                
-                # Extract content from response
-                if "choices" in result and len(result["choices"]) > 0:
-                    return result["choices"][0]["message"]["content"]
-                return ""
+                try:
+                    response = requests.post(url, headers=self.headers, json=payload)
+                    response.raise_for_status()  # Raise exception for HTTP errors
+                    result = response.json()
+                    
+                    # Extract content from response
+                    if "choices" in result and len(result["choices"]) > 0:
+                        return result["choices"][0]["message"]["content"]
+                    return ""
+                except KeyboardInterrupt:
+                    print("\nRequest cancelled by user.")
+                    return ""
             else:
                 # Streaming request
                 collected_content = ""
                 with requests.post(url, headers=self.headers, json=payload, stream=True) as response:
                     response.raise_for_status()  # Raise exception for HTTP errors
                     
-                    for line in response.iter_lines():
-                        if not line:
-                            continue
-                            
-                        # Handle SSE format
-                        line = line.decode('utf-8')
-                        if line.startswith('data: '):
-                            line = line[6:]  # Remove 'data: ' prefix
-                            
-                            # Skip keep-alive lines
-                            if line == "[DONE]":
-                                break
+                    try:
+                        for line in response.iter_lines():
+                            if not line:
+                                continue
                                 
-                            try:
-                                chunk = json.loads(line)
-                                if "choices" in chunk and len(chunk["choices"]) > 0:
-                                    delta = chunk["choices"][0].get("delta", {})
-                                    content = delta.get("content", "")
-                                    if content:
-                                        print(content, end="", flush=True)
-                                        collected_content += content
-                            except json.JSONDecodeError:
-                                pass  # Skip invalid JSON
+                            # Handle SSE format
+                            line = line.decode('utf-8')
+                            if line.startswith('data: '):
+                                line = line[6:]  # Remove 'data: ' prefix
+                                
+                                # Skip keep-alive lines
+                                if line == "[DONE]":
+                                    break
+                                    
+                                try:
+                                    chunk = json.loads(line)
+                                    if "choices" in chunk and len(chunk["choices"]) > 0:
+                                        delta = chunk["choices"][0].get("delta", {})
+                                        content = delta.get("content", "")
+                                        if content:
+                                            print(content, end="", flush=True)
+                                            collected_content += content
+                                except json.JSONDecodeError:
+                                    pass  # Skip invalid JSON
+                    except KeyboardInterrupt:
+                        print("\nGeneration cancelled by user.")
+                        return collected_content
                 
                 print()  # Add a final newline
                 return collected_content

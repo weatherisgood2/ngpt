@@ -56,22 +56,26 @@ def add_config_entry(config_path: Path, config_index: Optional[int] = None) -> N
     
     # Interactive configuration
     print("Enter configuration details (press Enter to use default values):")
-    new_entry["api_key"] = input(f"API Key: ") or new_entry["api_key"]
-    new_entry["base_url"] = input(f"Base URL [{new_entry['base_url']}]: ") or new_entry["base_url"]
-    new_entry["provider"] = input(f"Provider [{new_entry['provider']}]: ") or new_entry["provider"]
-    new_entry["model"] = input(f"Model [{new_entry['model']}]: ") or new_entry["model"]
-    
-    # Add or update the entry
-    if config_index is not None and config_index < len(configs):
-        configs[config_index] = new_entry
-        print(f"Updated configuration at index {config_index}")
-    else:
-        configs.append(new_entry)
-        print(f"Added new configuration at index {len(configs)-1}")
-    
-    # Save the updated configs
-    with open(config_path, "w") as f:
-        json.dump(configs, f, indent=2)
+    try:
+        new_entry["api_key"] = input(f"API Key: ") or new_entry["api_key"]
+        new_entry["base_url"] = input(f"Base URL [{new_entry['base_url']}]: ") or new_entry["base_url"]
+        new_entry["provider"] = input(f"Provider [{new_entry['provider']}]: ") or new_entry["provider"]
+        new_entry["model"] = input(f"Model [{new_entry['model']}]: ") or new_entry["model"]
+        
+        # Add or update the entry
+        if config_index is not None and config_index < len(configs):
+            configs[config_index] = new_entry
+            print(f"Updated configuration at index {config_index}")
+        else:
+            configs.append(new_entry)
+            print(f"Added new configuration at index {len(configs)-1}")
+        
+        # Save the updated configs
+        with open(config_path, "w") as f:
+            json.dump(configs, f, indent=2)
+    except KeyboardInterrupt:
+        print("\nConfiguration cancelled by user. Exiting.")
+        sys.exit(130)  # Exit with standard keyboard interrupt code
 
 def load_configs(custom_path: Optional[str] = None) -> List[Dict[str, Any]]:
     """

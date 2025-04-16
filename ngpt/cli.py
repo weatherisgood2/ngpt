@@ -171,8 +171,12 @@ def main():
         # Handle modes
         if args.shell:
             if args.prompt is None:
-                print("Enter shell command description: ", end='')
-                prompt = input()
+                try:
+                    print("Enter shell command description: ", end='')
+                    prompt = input()
+                except KeyboardInterrupt:
+                    print("\nInput cancelled by user. Exiting gracefully.")
+                    sys.exit(130)
             else:
                 prompt = args.prompt
                 
@@ -182,20 +186,33 @@ def main():
                 
             print(f"\nGenerated command: {command}")
             
-            print("Do you want to execute this command? [y/N] ", end='')
-            response = input().lower()
+            try:
+                print("Do you want to execute this command? [y/N] ", end='')
+                response = input().lower()
+            except KeyboardInterrupt:
+                print("\nCommand execution cancelled by user.")
+                return
+                
             if response == 'y' or response == 'yes':
                 import subprocess
                 try:
-                    result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-                    print(f"\nOutput:\n{result.stdout}")
+                    try:
+                        print("\nExecuting command... (Press Ctrl+C to cancel)")
+                        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+                        print(f"\nOutput:\n{result.stdout}")
+                    except KeyboardInterrupt:
+                        print("\nCommand execution cancelled by user.")
                 except subprocess.CalledProcessError as e:
                     print(f"\nError:\n{e.stderr}")
                     
         elif args.code:
             if args.prompt is None:
-                print("Enter code description: ", end='')
-                prompt = input()
+                try:
+                    print("Enter code description: ", end='')
+                    prompt = input()
+                except KeyboardInterrupt:
+                    print("\nInput cancelled by user. Exiting gracefully.")
+                    sys.exit(130)
             else:
                 prompt = args.prompt
                 
@@ -206,16 +223,23 @@ def main():
         else:
             # Default to chat mode
             if args.prompt is None:
-                print("Enter your prompt: ", end='')
-                prompt = input()
+                try:
+                    print("Enter your prompt: ", end='')
+                    prompt = input()
+                except KeyboardInterrupt:
+                    print("\nInput cancelled by user. Exiting gracefully.")
+                    sys.exit(130)
             else:
                 prompt = args.prompt
             client.chat(prompt, web_search=args.web_search)
     
     except KeyboardInterrupt:
-        print("\nOperation cancelled by user.")
+        print("\nOperation cancelled by user. Exiting gracefully.")
+        # Make sure we exit with a non-zero status code to indicate the operation was cancelled
+        sys.exit(130)  # 130 is the standard exit code for SIGINT (Ctrl+C)
     except Exception as e:
         print(f"Error: {e}")
+        sys.exit(1)  # Exit with error code
 
 if __name__ == "__main__":
     main() 
