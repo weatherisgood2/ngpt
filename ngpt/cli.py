@@ -35,7 +35,6 @@ def show_config_help():
     print("  3. Or set environment variables:")
     print("     - OPENAI_API_KEY")
     print("     - OPENAI_BASE_URL")
-    print("     - OPENAI_PROVIDER")
     print("     - OPENAI_MODEL")
     
     print("  4. Or provide command line arguments:")
