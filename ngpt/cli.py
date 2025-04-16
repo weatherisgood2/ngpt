@@ -2,7 +2,7 @@ import argparse
 import sys
 import os
 from .client import NGPTClient
-from .config import load_config, get_config_path
+from .config import load_config, get_config_path, load_configs, add_config_entry
 from . import __version__
 
 def show_config_help():
@@ -17,12 +17,20 @@ def show_config_help():
         print(f"     - ~/.config/ngpt/ngpt.conf")
     
     print("  2. Format your config file as JSON:")
-    print("""     {
-       "api_key": "your-api-key-here",
-       "base_url": "https://api.openai.com/v1/",
-       "provider": "OpenAI",
-       "model": "gpt-3.5-turbo"
-     }""")
+    print("""     [
+       {
+         "api_key": "your-api-key-here",
+         "base_url": "https://api.openai.com/v1/",
+         "provider": "OpenAI",
+         "model": "gpt-3.5-turbo"
+       },
+       {
+         "api_key": "your-second-api-key",
+         "base_url": "http://localhost:1337/v1/",
+         "provider": "Another Provider",
+         "model": "different-model"
+       }
+     ]""")
     
     print("  3. Or set environment variables:")
     print("     - OPENAI_API_KEY")
@@ -32,6 +40,12 @@ def show_config_help():
     
     print("  4. Or provide command line arguments:")
     print("     ngpt --api-key your-key --base-url https://api.example.com \"Your prompt\"")
+    
+    print("  5. Use --config-index to specify which configuration to use:")
+    print("     ngpt --config-index 1 \"Your prompt\"")
+    
+    print("  6. Use --config without arguments to add or edit a configuration:")
+    print("     ngpt --config --config-index 1")
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
@@ -53,8 +67,9 @@ def main():
     # Version flag
     parser.add_argument('-v', '--version', action='version', version=f'nGPT {__version__}', help='Show version information and exit')
     
-    # Config option
-    parser.add_argument('--config', help='Path to a custom configuration file')
+    # Config options
+    parser.add_argument('--config', nargs='?', const=True, help='Path to a custom configuration file or, if no value provided, enter interactive configuration mode')
+    parser.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use (default: 0)')
     
     # Global options
     parser.add_argument('--api-key', help='API key for the service')
@@ -78,8 +93,14 @@ def main():
     
     args = parser.parse_args()
     
-    # Load configuration
-    config = load_config(args.config)
+    # Handle interactive configuration mode
+    if args.config is True:  # --config was used without a value
+        config_path = get_config_path()
+        add_config_entry(config_path, args.config_index)
+        return
+    
+    # Load configuration using the specified index
+    config = load_config(args.config, args.config_index)
     
     # Command-line arguments override config settings
     if args.api_key:
@@ -94,11 +115,23 @@ def main():
     # Show config if requested
     if args.show_config:
         config_path = get_config_path(args.config)
+        configs = load_configs(args.config)
+        
         print(f"Configuration file: {config_path}")
+        print(f"Total configurations: {len(configs)}")
+        print(f"Active configuration index: {args.config_index}")
+        print("\nActive configuration details:")
         print(f"API Key: {'[Set]' if config['api_key'] else '[Not Set]'}")
         print(f"Base URL: {config['base_url']}")
         print(f"Provider: {config['provider']}")
         print(f"Model: {config['model']}")
+        
+        # Show all available configurations
+        if len(configs) > 1:
+            print("\nAvailable configurations:")
+            for i, cfg in enumerate(configs):
+                print(f"[{i}] {cfg['provider']} - {cfg['model']} ({'[API Key Set]' if cfg['api_key'] else '[API Key Not Set]'})")
+        
         return
     
     # Check if prompt is required but not provided
