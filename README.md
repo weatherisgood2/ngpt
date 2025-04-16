@@ -17,6 +17,7 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
   - [Command Line Options](#command-line-options)
   - [Configuration File](#configuration-file)
   - [Configuration Priority](#configuration-priority)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## Quick Start
@@ -208,6 +209,20 @@ nGPT determines configuration values in the following order (highest priority fi
 2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`)
 3. Configuration file (selected by `--config-index`, defaults to index 0)
 4. Default values
+
+## Contributing
+
+We welcome contributions to nGPT! Whether it's bug fixes, feature additions, or documentation improvements, your help is appreciated.
+
+To contribute:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes
+4. Commit with clear messages following conventional commit guidelines
+5. Push to your fork and submit a pull request
+
+Please check the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed guidelines on code style, pull request process, and development setup.
 
 ## License
 
