@@ -31,6 +31,12 @@ ngpt "Hello, how are you?"
 # Show version information
 ngpt -v
 
+# Show active configuration
+ngpt --show-config
+
+# Show all configurations
+ngpt --show-config --all
+
 # With custom options
 ngpt --api-key your-key --base-url http://your-endpoint "Hello"
 
@@ -49,8 +55,8 @@ ngpt -c "create a python function that calculates fibonacci numbers"
 ```python
 from ngpt import NGPTClient, load_config
 
-# Load from config file
-config = load_config()
+# Load the first configuration (index 0) from config file
+config = load_config(config_index=0)
 
 # Initialize the client with config
 client = NGPTClient(**config)
@@ -84,10 +90,12 @@ You can configure the client using the following options:
 
 - `--api-key`: API key for the service
 - `--base-url`: Base URL for the API
-- `--provider`: Provider name
 - `--model`: Model to use
 - `--web-search`: Enable web search capability (Note: Your API endpoint must support this feature)
 - `--config`: Path to a custom configuration file
+- `--config-index`: Index of the configuration to use from the config file (default: 0)
+- `--show-config`: Show configuration details and exit.
+- `--all`: Used with `--show-config` to display details for all configurations.
 
 ### Configuration File
 
@@ -97,35 +105,39 @@ nGPT uses a configuration file stored in the standard user config directory for 
 - **macOS**: `~/Library/Application Support/ngpt/ngpt.conf`
 - **Windows**: `%APPDATA%\ngpt\ngpt.conf`
 
-The configuration file uses JSON format:
+The configuration file uses a JSON list format, allowing you to store multiple configurations. You can select which configuration to use with the `--config-index` argument (or by default, index 0 is used).
 
-#### OpenAI API Example
+#### Multiple Configurations Example (`ngpt.conf`)
 ```json
-{
-  "api_key": "your_openai_api_key_here",
-  "base_url": "https://api.openai.com/v1/",
-  "provider": "OpenAI",
-  "model": "gpt-3.5-turbo"
-}
-```
-
-#### Custom Endpoint Example
-```json
-{
-  "api_key": "your_api_key_here",
-  "base_url": "http://127.0.0.1:1337/v1/",
-  "provider": "Blackbox",
-  "model": "DeepSeek-V3"
-}
+[
+  {
+    "api_key": "your-openai-api-key-here",
+    "base_url": "https://api.openai.com/v1/",
+    "provider": "OpenAI",
+    "model": "gpt-4o"
+  },
+  {
+    "api_key": "your-groq-api-key-here",
+    "base_url": "https://api.groq.com/openai/v1/",
+    "provider": "Groq",
+    "model": "llama3-70b-8192"
+  },
+  {
+    "api_key": "your-ollama-key-if-needed",
+    "base_url": "http://localhost:11434/v1/",
+    "provider": "Ollama-Local",
+    "model": "llama3"
+  }
+]
 ```
 
 ### Configuration Priority
 
 nGPT determines configuration values in the following order (highest priority first):
 
-1. Command line arguments
-2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_PROVIDER`, `OPENAI_MODEL`)
-3. Configuration file
+1. Command line arguments (`--api-key`, `--base-url`, `--model`)
+2. Environment variables (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`)
+3. Configuration file (selected by `--config-index`, defaults to index 0)
 4. Default values
 
 ## Special Features

@@ -78,7 +78,6 @@ def main():
     global_group = parser.add_argument_group('Global Options')
     global_group.add_argument('--api-key', help='API key for the service')
     global_group.add_argument('--base-url', help='Base URL for the API')
-    global_group.add_argument('--provider', help='Provider name')
     global_group.add_argument('--model', help='Model to use')
     global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
@@ -118,8 +117,6 @@ def main():
         active_config["api_key"] = args.api_key
     if args.base_url:
         active_config["base_url"] = args.base_url
-    if args.provider:
-        active_config["provider"] = args.provider
     if args.model:
         active_config["model"] = args.model
     
