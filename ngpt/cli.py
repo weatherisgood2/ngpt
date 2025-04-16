@@ -68,22 +68,27 @@ def main():
     parser.add_argument('-v', '--version', action='version', version=f'nGPT {__version__}', help='Show version information and exit')
     
     # Config options
-    parser.add_argument('--config', nargs='?', const=True, help='Path to a custom configuration file or, if no value provided, enter interactive configuration mode')
-    parser.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use (default: 0)')
+    config_group = parser.add_argument_group('Configuration Options')
+    config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode')
+    config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use (default: 0)')
+    config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
+    config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
     
     # Global options
-    parser.add_argument('--api-key', help='API key for the service')
-    parser.add_argument('--base-url', help='Base URL for the API')
-    parser.add_argument('--provider', help='Provider name')
-    parser.add_argument('--model', help='Model to use')
-    parser.add_argument('--web-search', action='store_true', 
+    global_group = parser.add_argument_group('Global Options')
+    global_group.add_argument('--api-key', help='API key for the service')
+    global_group.add_argument('--base-url', help='Base URL for the API')
+    global_group.add_argument('--provider', help='Provider name')
+    global_group.add_argument('--model', help='Model to use')
+    global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
     
     # Mode flags (mutually exclusive)
-    mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
-    mode_group.add_argument('-c', '--code', action='store_true', help='Generate code')
-    mode_group.add_argument('--show-config', action='store_true', help='Show the current configuration and exit')
+    mode_group = parser.add_argument_group('Modes (mutually exclusive)')
+    mode_exclusive_group = mode_group.add_mutually_exclusive_group()
+    mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
+    mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
+    # Note: --show-config is handled separately and implicitly acts as a mode
     
     # Language option for code mode
     parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
@@ -93,24 +98,30 @@ def main():
     
     args = parser.parse_args()
     
+    # Validate --all usage
+    if args.all and not args.show_config:
+        parser.error("--all can only be used with --show-config")
+
     # Handle interactive configuration mode
     if args.config is True:  # --config was used without a value
         config_path = get_config_path()
         add_config_entry(config_path, args.config_index)
         return
     
-    # Load configuration using the specified index
-    config = load_config(args.config, args.config_index)
+    # Load configuration using the specified index (needed for active config display)
+    active_config = load_config(args.config, args.config_index)
     
-    # Command-line arguments override config settings
+    # Command-line arguments override config settings for active config display
+    # This part is kept to ensure the active config display reflects potential overrides,
+    # even though the overrides don't affect the stored configurations displayed with --all.
     if args.api_key:
-        config["api_key"] = args.api_key
+        active_config["api_key"] = args.api_key
     if args.base_url:
-        config["base_url"] = args.base_url
+        active_config["base_url"] = args.base_url
     if args.provider:
-        config["provider"] = args.provider
+        active_config["provider"] = args.provider
     if args.model:
-        config["model"] = args.model
+        active_config["model"] = args.model
     
     # Show config if requested
     if args.show_config:
@@ -120,17 +131,30 @@ def main():
         print(f"Configuration file: {config_path}")
         print(f"Total configurations: {len(configs)}")
         print(f"Active configuration index: {args.config_index}")
-        print("\nActive configuration details:")
-        print(f"API Key: {'[Set]' if config['api_key'] else '[Not Set]'}")
-        print(f"Base URL: {config['base_url']}")
-        print(f"Provider: {config['provider']}")
-        print(f"Model: {config['model']}")
-        
-        # Show all available configurations
-        if len(configs) > 1:
-            print("\nAvailable configurations:")
+
+        if args.all:
+            # Show details for all configurations
+            print("\nAll configuration details:")
             for i, cfg in enumerate(configs):
-                print(f"[{i}] {cfg['provider']} - {cfg['model']} ({'[API Key Set]' if cfg['api_key'] else '[API Key Not Set]'})")
+                active_str = '(Active)' if i == args.config_index else ''
+                print(f"\n--- Configuration Index {i} {active_str} ---")
+                print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
+                print(f"  Base URL: {cfg.get('base_url', 'N/A')}")
+                print(f"  Provider: {cfg.get('provider', 'N/A')}")
+                print(f"  Model: {cfg.get('model', 'N/A')}")
+        else:
+            # Show active config details and summary list
+            print("\nActive configuration details:")
+            print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}")
+            print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
+            print(f"  Provider: {active_config.get('provider', 'N/A')}")
+            print(f"  Model: {active_config.get('model', 'N/A')}")
+            
+            if len(configs) > 1:
+                print("\nAvailable configurations:")
+                for i, cfg in enumerate(configs):
+                    active_marker = "*" if i == args.config_index else " "
+                    print(f"[{i}]{active_marker} {cfg.get('provider', 'N/A')} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
         
         return
     
@@ -139,12 +163,12 @@ def main():
         parser.print_help()
         return
         
-    # Check configuration
-    if not check_config(config):
+    # Check configuration (using the potentially overridden active_config)
+    if not check_config(active_config):
         return
     
-    # Initialize client
-    client = NGPTClient(**config)
+    # Initialize client using the potentially overridden active_config
+    client = NGPTClient(**active_config)
     
     try:
         # Handle modes
@@ -195,6 +219,6 @@ def main():
         print("\nOperation cancelled by user.")
     except Exception as e:
         print(f"Error: {e}")
-        
+
 if __name__ == "__main__":
     main() 
