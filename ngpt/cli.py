@@ -11,6 +11,14 @@ try:
     from prompt_toolkit.styles import Style
     from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.formatted_text import HTML
+    from prompt_toolkit.layout.containers import HSplit, Window
+    from prompt_toolkit.layout.layout import Layout
+    from prompt_toolkit.layout.controls import FormattedTextControl
+    from prompt_toolkit.application import Application
+    from prompt_toolkit.widgets import TextArea
+    from prompt_toolkit.layout.margins import ScrollbarMargin
+    from prompt_toolkit.filters import to_filter
+    import shutil
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
@@ -303,24 +311,70 @@ def main():
                         def _(event):
                             event.app.exit(result=event.app.current_buffer.text)
                             
-                        # Create a style
-                        style = Style.from_dict({
-                            'prompt': 'ansicyan bold',
-                            'cursor': 'bg:ansicyan #ansiwhite',
-                        })
+                        # Explicitly bind Ctrl+C to exit
+                        @kb.add('c-c')
+                        def _(event):
+                            event.app.exit(result=None)
+                            print("\nInput cancelled by user. Exiting gracefully.")
+                            sys.exit(130)
                         
-                        # Use prompt_toolkit for multiline input
-                        user_input = pt_prompt(
-                            HTML('<prompt>>>> </prompt>'),
+                        # Get terminal dimensions
+                        term_width, term_height = shutil.get_terminal_size()
+                        
+                        # Create a styled TextArea
+                        text_area = TextArea(
+                            style="class:input-area",
                             multiline=True,
-                            mouse_support=True,
-                            key_bindings=kb,
-                            style=style,
                             wrap_lines=True,
+                            width=term_width - 4,
+                            height=min(20, term_height - 8),
+                            prompt=HTML("<ansicyan>>>> </ansicyan>"),
+                            scrollbar=True,
+                            focus_on_click=True,
+                            lexer=None,
+                        )
+                        text_area.window.right_margins = [ScrollbarMargin(display_arrows=True)]
+                        
+                        # Create a title bar
+                        title_bar = FormattedTextControl(
+                            HTML("<style bg='ansicyan' fg='ansiblack'><b> NGPT Multi-line Editor </b></style>")
                         )
                         
-                        prompt = user_input
-                        if not prompt.strip():
+                        # Create a status bar with key bindings info
+                        status_bar = FormattedTextControl(
+                            HTML("<ansiblue><b>Ctrl+D</b></ansiblue>: Submit | <ansiblue><b>Ctrl+C</b></ansiblue>: Cancel | <ansiblue><b>↑↓←→</b></ansiblue>: Navigate")
+                        )
+                        
+                        # Create the layout
+                        layout = Layout(
+                            HSplit([
+                                Window(title_bar, height=1),
+                                Window(height=1, char="-", style="class:separator"),
+                                text_area,
+                                Window(height=1, char="-", style="class:separator"),
+                                Window(status_bar, height=1),
+                            ])
+                        )
+                        
+                        # Create a style
+                        style = Style.from_dict({
+                            "separator": "ansigray",
+                            "input-area": "bg:ansiblack fg:ansiwhite",
+                            "cursor": "bg:ansiwhite fg:ansiblack",
+                        })
+                        
+                        # Create and run the application
+                        app = Application(
+                            layout=layout,
+                            full_screen=False,
+                            key_bindings=kb,
+                            style=style,
+                            mouse_support=True,
+                        )
+                        
+                        prompt = app.run()
+                        
+                        if not prompt or not prompt.strip():
                             print("Empty prompt. Exiting.")
                             return
                     else:
