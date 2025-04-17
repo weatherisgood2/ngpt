@@ -15,6 +15,7 @@ A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
   - [Python Library](#as-a-library)
 - [Configuration](#configuration)
   - [Command Line Options](#command-line-options)
+  - [Interactive Configuration](#interactive-configuration)
   - [Configuration File](#configuration-file)
   - [Configuration Priority](#configuration-priority)
 - [Contributing](#contributing)
@@ -159,13 +160,30 @@ You can configure the client using the following options:
 | `--base-url` | Base URL for the API |
 | `--model` | Model to use |
 | `--web-search` | Enable web search capability |
-| `--config` | Path to a custom configuration file |
+| `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--show-config` | Show configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations |
 | `-s, --shell` | Generate and execute shell commands |
 | `-c, --code` | Generate clean code output |
 | `-v, --version` | Show version information |
+
+### Interactive Configuration
+
+The `--config` option without arguments enters interactive configuration mode, allowing you to add or edit configurations:
+
+```bash
+# Add a new configuration
+ngpt --config
+
+# Edit an existing configuration at index 1
+ngpt --config --config-index 1
+```
+
+In interactive mode:
+- When editing an existing configuration, press Enter to keep the current values
+- When creating a new configuration, press Enter to use default values
+- For security, your API key is not displayed when editing configurations
 
 ### Configuration File
 
