@@ -35,6 +35,9 @@ ngpt --code "function to calculate the Fibonacci sequence"
 
 # Generate and execute shell commands
 ngpt --shell "list all files in the current directory"
+
+# Use multiline editor for complex prompts
+ngpt --text
 ```
 
 ## Features
@@ -47,6 +50,7 @@ ngpt --shell "list all files in the current directory"
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
 - 💻 **Shell Command Generation**: OS-aware command execution
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
+- 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
 
 ## Installation
 
@@ -88,6 +92,10 @@ ngpt -s "list all files in current directory"
 # Generate clean code (using -c or --code flag)
 # Returns only code without markdown formatting or explanations
 ngpt -c "create a python function that calculates fibonacci numbers"
+
+# Use multiline text editor for complex prompts (using -t or --text flag)
+# Opens an interactive editor with syntax highlighting and intuitive controls
+ngpt -t
 ```
 
 ### As a Library
@@ -167,6 +175,7 @@ You can configure the client using the following options:
 | `--all` | Used with `--show-config` to display all configurations |
 | `-s, --shell` | Generate and execute shell commands |
 | `-c, --code` | Generate clean code output |
+| `-t, --text` | Open interactive multiline editor for complex prompts |
 | `-v, --version` | Show version information |
 
 ### Interactive Configuration
