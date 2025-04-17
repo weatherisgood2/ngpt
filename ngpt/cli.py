@@ -5,6 +5,16 @@ from .client import NGPTClient
 from .config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
 from . import __version__
 
+# Optional imports for enhanced UI
+try:
+    from prompt_toolkit import prompt as pt_prompt
+    from prompt_toolkit.styles import Style
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.formatted_text import HTML
+    HAS_PROMPT_TOOLKIT = True
+except ImportError:
+    HAS_PROMPT_TOOLKIT = False
+
 def show_config_help():
     """Display help information about configuration."""
     print("\nConfiguration Help:")
@@ -91,7 +101,7 @@ def main():
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
     mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
     mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
-    mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D or Ctrl+Z on Windows)')
+    mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D)')
     # Note: --show-config is handled separately and implicitly acts as a mode
     
     # Language option for code mode
@@ -280,15 +290,58 @@ def main():
                 prompt = args.prompt
             else:
                 try:
-                    print("Enter your multi-line prompt (press Ctrl+D or Ctrl+Z on Windows to submit):")
-                    print("Note: On Unix systems, you may need to press Ctrl+D twice if the line has text.")
-                    
-                    # Use sys.stdin.read() instead of input() for better EOF handling
-                    prompt = sys.stdin.read()
-                    
-                    if not prompt.strip():
-                        print("Empty prompt. Exiting.")
-                        return
+                    if HAS_PROMPT_TOOLKIT:
+                        print("\033[94m\033[1m" + "Multi-line Input Mode" + "\033[0m")
+                        print("Press Ctrl+D to submit, Ctrl+C to exit")
+                        print("Use arrow keys to navigate, Enter for new line")
+                        
+                        # Create key bindings
+                        kb = KeyBindings()
+                        
+                        # Explicitly bind Ctrl+D to exit
+                        @kb.add('c-d')
+                        def _(event):
+                            event.app.exit(result=event.app.current_buffer.text)
+                            
+                        # Create a style
+                        style = Style.from_dict({
+                            'prompt': 'ansicyan bold',
+                            'cursor': 'bg:ansicyan #ansiwhite',
+                        })
+                        
+                        # Use prompt_toolkit for multiline input
+                        user_input = pt_prompt(
+                            HTML('<prompt>>>> </prompt>'),
+                            multiline=True,
+                            mouse_support=True,
+                            key_bindings=kb,
+                            style=style,
+                            wrap_lines=True,
+                        )
+                        
+                        prompt = user_input
+                        if not prompt.strip():
+                            print("Empty prompt. Exiting.")
+                            return
+                    else:
+                        # Fallback to standard input with a better implementation
+                        print("Enter your multi-line prompt (press Ctrl+D to submit):")
+                        print("Note: Install 'prompt_toolkit' package for an enhanced input experience")
+                        
+                        # Use a more robust approach for multiline input without prompt_toolkit
+                        lines = []
+                        while True:
+                            try:
+                                line = input()
+                                lines.append(line)
+                            except EOFError:  # Ctrl+D was pressed
+                                break
+                        
+                        prompt = "\n".join(lines)
+                        if not prompt.strip():
+                            print("Empty prompt. Exiting.")
+                            return
+                        
                 except KeyboardInterrupt:
                     print("\nInput cancelled by user. Exiting gracefully.")
                     sys.exit(130)
