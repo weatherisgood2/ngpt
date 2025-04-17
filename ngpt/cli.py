@@ -281,14 +281,11 @@ def main():
             else:
                 try:
                     print("Enter your multi-line prompt (press Ctrl+D or Ctrl+Z on Windows to submit):")
-                    lines = []
-                    while True:
-                        try:
-                            line = input()
-                            lines.append(line)
-                        except EOFError:
-                            break
-                    prompt = "\n".join(lines)
+                    print("Note: On Unix systems, you may need to press Ctrl+D twice if the line has text.")
+                    
+                    # Use sys.stdin.read() instead of input() for better EOF handling
+                    prompt = sys.stdin.read()
+                    
                     if not prompt.strip():
                         print("Empty prompt. Exiting.")
                         return
@@ -296,6 +293,7 @@ def main():
                     print("\nInput cancelled by user. Exiting gracefully.")
                     sys.exit(130)
             
+            print("\nSubmission successful. Waiting for response...")
             client.chat(prompt, web_search=args.web_search)
             
         else:
