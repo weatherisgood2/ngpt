@@ -18,6 +18,7 @@ try:
     from prompt_toolkit.widgets import TextArea
     from prompt_toolkit.layout.margins import ScrollbarMargin
     from prompt_toolkit.filters import to_filter
+    from prompt_toolkit.history import InMemoryHistory
     import shutil
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
@@ -82,6 +83,183 @@ def check_config(config):
     
     return True
 
+def interactive_chat_session(client, web_search=False, no_stream=False):
+    """Run an interactive chat session with conversation history."""
+    # Define ANSI color codes for terminal output
+    COLORS = {
+        "reset": "\033[0m",
+        "bold": "\033[1m",
+        "cyan": "\033[36m",
+        "green": "\033[32m", 
+        "yellow": "\033[33m",
+        "blue": "\033[34m",
+        "magenta": "\033[35m",
+        "gray": "\033[90m",
+        "bg_blue": "\033[44m",
+        "bg_cyan": "\033[46m"
+    }
+    
+    # Get terminal width for better formatting
+    try:
+        term_width = shutil.get_terminal_size().columns
+    except:
+        term_width = 80  # Default fallback
+    
+    # Improved visual header with better layout
+    header = f"{COLORS['cyan']}{COLORS['bold']}🤖 nGPT Interactive Chat Session 🤖{COLORS['reset']}"
+    print(f"\n{header}")
+    
+    # Create a separator line - use a consistent separator length for all lines
+    separator_length = min(40, term_width - 10)
+    separator = f"{COLORS['gray']}{'─' * separator_length}{COLORS['reset']}"
+    print(separator)
+    
+    # Group commands into categories with better formatting
+    print(f"\n{COLORS['cyan']}Navigation:{COLORS['reset']}")
+    print(f"  {COLORS['yellow']}↑/↓{COLORS['reset']} : Browse input history")
+    
+    print(f"\n{COLORS['cyan']}Session Commands:{COLORS['reset']}")
+    print(f"  {COLORS['yellow']}history{COLORS['reset']} : Show conversation history")
+    print(f"  {COLORS['yellow']}clear{COLORS['reset']}   : Reset conversation")
+    print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
+    
+    print(f"\n{separator}\n")
+    
+    # Custom separator - use the same length for consistency
+    def print_separator():
+        print(f"\n{separator}\n")
+    
+    # Initialize conversation history
+    system_prompt = "You are a helpful assistant."
+    conversation = []
+    system_message = {"role": "system", "content": system_prompt}
+    conversation.append(system_message)
+    
+    # Initialize prompt_toolkit history
+    prompt_history = InMemoryHistory() if HAS_PROMPT_TOOLKIT else None
+    
+    # Decorative chat headers with rounded corners
+    def user_header():
+        return f"{COLORS['cyan']}{COLORS['bold']}╭─ 👤 You {COLORS['reset']}"
+    
+    def ngpt_header():
+        return f"{COLORS['green']}{COLORS['bold']}╭─ 🤖 nGPT {COLORS['reset']}"
+    
+    # Function to display conversation history
+    def display_history():
+        if len(conversation) <= 1:  # Only system message
+            print(f"\n{COLORS['yellow']}No conversation history yet.{COLORS['reset']}")
+            return
+            
+        print(f"\n{COLORS['cyan']}{COLORS['bold']}Conversation History:{COLORS['reset']}")
+        print(separator)
+        
+        # Skip system message
+        message_count = 0
+        for i, msg in enumerate(conversation):
+            if msg["role"] == "system":
+                continue
+                
+            if msg["role"] == "user":
+                message_count += 1
+                print(f"\n{user_header()}")
+                print(f"{COLORS['cyan']}│ [{message_count}] {COLORS['reset']}{msg['content']}")
+            elif msg["role"] == "assistant":
+                print(f"\n{ngpt_header()}")
+                print(f"{COLORS['green']}│ {COLORS['reset']}{msg['content']}")
+        
+        print(f"\n{separator}")  # Consistent separator at the end
+    
+    # Function to clear conversation history
+    def clear_history():
+        nonlocal conversation
+        conversation = [{"role": "system", "content": system_prompt}]
+        print(f"\n{COLORS['yellow']}Conversation history cleared.{COLORS['reset']}")
+        print(separator)  # Add separator for consistency
+    
+    try:
+        while True:
+            # Get user input
+            if HAS_PROMPT_TOOLKIT:
+                # Custom styling for prompt_toolkit
+                style = Style.from_dict({
+                    'prompt': 'ansicyan bold',
+                    'input': 'ansiwhite',
+                })
+                
+                # Create key bindings for Ctrl+C handling
+                kb = KeyBindings()
+                @kb.add('c-c')
+                def _(event):
+                    event.app.exit(result=None)
+                    raise KeyboardInterrupt()
+                
+                # Get user input with styled prompt - using proper HTML formatting
+                user_input = pt_prompt(
+                    HTML("<ansicyan><b>╭─ 👤 You:</b></ansicyan> "),
+                    style=style,
+                    key_bindings=kb,
+                    history=prompt_history
+                )
+            else:
+                user_input = input(f"{user_header()}: {COLORS['reset']}")
+            
+            # Check for exit commands
+            if user_input.lower() in ('exit', 'quit', 'bye'):
+                print(f"\n{COLORS['green']}Ending chat session. Goodbye!{COLORS['reset']}")
+                break
+            
+            # Check for special commands
+            if user_input.lower() == 'history':
+                display_history()
+                continue
+            
+            if user_input.lower() == 'clear':
+                clear_history()
+                continue
+            
+            # Skip empty messages but don't raise an error
+            if not user_input.strip():
+                continue
+            
+            # Add user message to conversation
+            user_message = {"role": "user", "content": user_input}
+            conversation.append(user_message)
+            
+            # Print assistant indicator with formatting
+            if not no_stream:
+                print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
+            else:
+                print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
+            
+            # Get AI response with conversation history
+            response = client.chat(
+                prompt=user_input,
+                messages=conversation,
+                stream=not no_stream,
+                web_search=web_search
+            )
+            
+            # Add AI response to conversation history
+            if response:
+                assistant_message = {"role": "assistant", "content": response}
+                conversation.append(assistant_message)
+                
+                # Print response if not streamed
+                if no_stream:
+                    print(response)
+            
+            # Print separator between exchanges
+            print_separator()
+            
+    except KeyboardInterrupt:
+        print(f"\n\n{COLORS['green']}Chat session ended by user. Goodbye!{COLORS['reset']}")
+    except Exception as e:
+        print(f"\n{COLORS['yellow']}Error during chat session: {str(e)}{COLORS['reset']}")
+        # Print traceback for debugging if it's a serious error
+        import traceback
+        traceback.print_exc()
+
 def main():
     parser = argparse.ArgumentParser(description="nGPT - A CLI tool for interacting with custom OpenAI API endpoints")
     
@@ -109,10 +287,11 @@ def main():
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
+    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', help='Start an interactive chat session')
     mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
     mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
     mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D)')
-    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', help='Start an interactive chat session')
+    # Note: --show-config is handled separately and implicitly acts as a mode
     
     # Language option for code mode
     parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
@@ -229,7 +408,7 @@ def main():
         
         return
     
-    # Check if prompt is required but not provided
+    # For interactive mode, we'll allow continuing without a specific prompt
     if not args.prompt and not (args.shell or args.code or args.text or args.interactive):
         parser.print_help()
         return
@@ -243,7 +422,10 @@ def main():
     
     try:
         # Handle modes
-        if args.shell:
+        if args.interactive:
+            # Interactive chat mode
+            interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream)
+        elif args.shell:
             if args.prompt is None:
                 try:
                     print("Enter shell command description: ", end='')
@@ -279,139 +461,6 @@ def main():
                 except subprocess.CalledProcessError as e:
                     print(f"\nError:\n{e.stderr}")
                     
-        elif args.interactive:
-            # Interactive chat mode
-            conversation_history = []
-            print("\033[94m\033[1m" + "Interactive Chat Mode" + "\033[0m")
-            print("Type your messages and press Ctrl+D to send. Type 'exit', 'quit', or use Ctrl+C to exit.")
-            print("Type 'clear' to start a new conversation.")
-            if HAS_PROMPT_TOOLKIT:
-                print("Use arrow keys to navigate, Enter for new line in multi-line mode.")
-            print()
-            
-            try:
-                while True:
-                    try:
-                        # Get user input with prompt_toolkit if available
-                        if HAS_PROMPT_TOOLKIT:
-                            # Create key bindings
-                            kb = KeyBindings()
-                            
-                            # Explicitly bind Ctrl+C to exit
-                            @kb.add('c-c')
-                            def _(event):
-                                event.app.exit(result=None)
-                                print("\nExiting interactive chat mode.")
-                                sys.exit(130)
-                            
-                            # Explicitly bind Ctrl+D to submit
-                            @kb.add('c-d')
-                            def _(event):
-                                event.app.exit(result=event.app.current_buffer.text)
-                            
-                            # Get terminal dimensions
-                            term_width, term_height = shutil.get_terminal_size()
-                            
-                            # Create a styled TextArea
-                            text_area = TextArea(
-                                style="class:input-area",
-                                multiline=True,
-                                wrap_lines=True,
-                                width=term_width - 4,
-                                height=min(10, term_height - 8),
-                                prompt=HTML("<ansiblue>>>> </ansiblue>"),
-                                scrollbar=True,
-                                focus_on_click=True,
-                                lexer=None,
-                            )
-                            text_area.window.right_margins = [ScrollbarMargin(display_arrows=True)]
-                            
-                            # Create a title bar
-                            title_bar = FormattedTextControl(
-                                HTML("<style bg='ansiblue' fg='ansiwhite'><b> NGPT Interactive Chat </b></style>")
-                            )
-                            
-                            # Create a status bar with key bindings and commands info
-                            status_bar = FormattedTextControl(
-                                HTML("<ansiblue><b>Ctrl+D</b></ansiblue>: Submit | <ansiblue><b>Ctrl+C</b></ansiblue>: Exit | Type <ansiblue><b>clear</b></ansiblue> to start new conversation")
-                            )
-                            
-                            # Create the layout
-                            layout = Layout(
-                                HSplit([
-                                    Window(title_bar, height=1),
-                                    Window(height=1, char="-", style="class:separator"),
-                                    text_area,
-                                    Window(height=1, char="-", style="class:separator"),
-                                    Window(status_bar, height=1),
-                                ])
-                            )
-                            
-                            # Create a style
-                            style = Style.from_dict({
-                                "separator": "ansigray",
-                                "input-area": "bg:ansiblack fg:ansiwhite",
-                                "cursor": "bg:ansiwhite fg:ansiblack",
-                            })
-                            
-                            # Create and run the application
-                            app = Application(
-                                layout=layout,
-                                full_screen=False,
-                                key_bindings=kb,
-                                style=style,
-                                mouse_support=True,
-                            )
-                            
-                            user_input = app.run()
-                            if user_input is None:
-                                break
-                        else:
-                            # Fallback to standard input
-                            user_input = input("\033[1m\033[94m>>> \033[0m")
-                        
-                        # Handle special commands
-                        if user_input is None:
-                            break
-                        elif user_input.lower() in ['exit', 'quit', 'q']:
-                            print("Exiting interactive chat mode.")
-                            break
-                        elif user_input.lower() == 'clear':
-                            print("Starting a new conversation.")
-                            conversation_history = []
-                            continue
-                        elif not user_input.strip():
-                            continue
-                        
-                        # Add user message to conversation history
-                        conversation_history.append({"role": "user", "content": user_input})
-                        
-                        # Get response from the model
-                        print("\033[90m" + "AI is thinking..." + "\033[0m")
-                        response = client.chat(
-                            prompt=user_input,
-                            stream=not args.no_stream,
-                            messages=conversation_history,
-                            web_search=args.web_search
-                        )
-                        
-                        # Add assistant message to conversation history
-                        conversation_history.append({"role": "assistant", "content": response})
-                        
-                        # If no streaming, print the response
-                        if args.no_stream and response:
-                            print("\033[92m" + response + "\033[0m")
-                        
-                        print()  # Add spacing between exchanges
-                    
-                    except KeyboardInterrupt:
-                        print("\nExiting interactive chat mode.")
-                        break
-                    
-            except Exception as e:
-                print(f"\nError in interactive mode: {e}")
-                return
-                
         elif args.code:
             if args.prompt is None:
                 try:

@@ -30,6 +30,9 @@ pip install ngpt
 # Chat with default settings
 ngpt "Tell me about quantum computing"
 
+# Start an interactive chat session with conversation memory
+ngpt -i
+
 # Return response without streaming
 ngpt -n "Tell me about quantum computing"
 
@@ -48,6 +51,7 @@ ngpt --text
 - ✅ **Dual Mode**: Use as a CLI tool or import as a Python library
 - 🪶 **Lightweight**: Minimal dependencies (just `requests`)
 - 🔄 **API Flexibility**: Works with OpenAI, Ollama, Groq, and any compatible endpoint
+- 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
@@ -70,6 +74,9 @@ Requires Python 3.8 or newer.
 ```bash
 # Basic chat (default mode)
 ngpt "Hello, how are you?"
+
+# Interactive chat session with conversation history
+ngpt -i
 
 # Show version information
 ngpt -v
@@ -177,6 +184,7 @@ You can configure the client using the following options:
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
 | `--show-config` | Show configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations |
+| `-i, --interactive` | Start an interactive chat session with stylish UI, conversation history, and special commands |
 | `-s, --shell` | Generate and execute shell commands |
 | `-c, --code` | Generate clean code output |
 | `-t, --text` | Open interactive multiline editor for complex prompts |
