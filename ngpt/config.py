@@ -51,23 +51,44 @@ def add_config_entry(config_path: Path, config_index: Optional[int] = None) -> N
     """Add a new configuration entry or update existing one at the specified index."""
     configs = load_configs(custom_path=str(config_path))
     
-    # Create a new entry based on the default
-    new_entry = DEFAULT_CONFIG_ENTRY.copy()
+    # Determine if we're editing an existing config or creating a new one
+    is_existing_config = config_index is not None and config_index < len(configs)
     
-    # Interactive configuration
-    print("Enter configuration details (press Enter to use default values):")
+    # Set up entry based on whether we're editing or creating
+    if is_existing_config:
+        # Use existing config as the base when editing
+        entry = configs[config_index].copy()
+        print("Enter configuration details (press Enter to keep current values):")
+    else:
+        # Use default config as the base when creating new
+        entry = DEFAULT_CONFIG_ENTRY.copy()
+        print("Enter configuration details (press Enter to use default values):")
+    
     try:
-        new_entry["api_key"] = input(f"API Key: ") or new_entry["api_key"]
-        new_entry["base_url"] = input(f"Base URL [{new_entry['base_url']}]: ") or new_entry["base_url"]
-        new_entry["provider"] = input(f"Provider [{new_entry['provider']}]: ") or new_entry["provider"]
-        new_entry["model"] = input(f"Model [{new_entry['model']}]: ") or new_entry["model"]
+        # For API key, just show the prompt without the current value for security
+        user_input = input(f"API Key: ")
+        if user_input:
+            entry["api_key"] = user_input
+        
+        # For other fields, show current/default value and keep it if Enter is pressed
+        user_input = input(f"Base URL [{entry['base_url']}]: ")
+        if user_input:
+            entry["base_url"] = user_input
+        
+        user_input = input(f"Provider [{entry['provider']}]: ")
+        if user_input:
+            entry["provider"] = user_input
+        
+        user_input = input(f"Model [{entry['model']}]: ")
+        if user_input:
+            entry["model"] = user_input
         
         # Add or update the entry
-        if config_index is not None and config_index < len(configs):
-            configs[config_index] = new_entry
+        if is_existing_config:
+            configs[config_index] = entry
             print(f"Updated configuration at index {config_index}")
         else:
-            configs.append(new_entry)
+            configs.append(entry)
             print(f"Added new configuration at index {len(configs)-1}")
         
         # Save the updated configs
@@ -128,8 +149,7 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0) -> Dic
     # Override with environment variables if they exist
     env_mapping = {
         "OPENAI_API_KEY": "api_key",
-        "OPENAI_BASE_URL": "base_url",
-        "OPENAI_PROVIDER": "provider", 
+        "OPENAI_BASE_URL": "base_url", 
         "OPENAI_MODEL": "model"
     }
     

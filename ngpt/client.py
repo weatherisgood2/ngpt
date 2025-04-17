@@ -10,7 +10,7 @@ class NGPTClient:
         self,
         api_key: str = "",
         base_url: str = "https://api.openai.com/v1/",
-        provider: str = "OpenAI",  # Provider is now just a label, kept for potential future use/logging
+        provider: str = "OpenAI",
         model: str = "gpt-3.5-turbo"
     ):
         self.api_key = api_key
