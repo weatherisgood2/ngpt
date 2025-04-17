@@ -162,6 +162,7 @@ You can configure the client using the following options:
 | `--web-search` | Enable web search capability |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
+| `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
 | `--show-config` | Show configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations |
 | `-s, --shell` | Generate and execute shell commands |
@@ -178,12 +179,16 @@ ngpt --config
 
 # Edit an existing configuration at index 1
 ngpt --config --config-index 1
+
+# Remove a configuration at index 2
+ngpt --config --remove --config-index 2
 ```
 
 In interactive mode:
 - When editing an existing configuration, press Enter to keep the current values
 - When creating a new configuration, press Enter to use default values
 - For security, your API key is not displayed when editing configurations
+- When removing a configuration, you'll be asked to confirm before deletion
 
 ### Configuration File
 

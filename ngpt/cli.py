@@ -2,7 +2,7 @@ import argparse
 import sys
 import os
 from .client import NGPTClient
-from .config import load_config, get_config_path, load_configs, add_config_entry
+from .config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
 from . import __version__
 
 def show_config_help():
@@ -47,6 +47,8 @@ def show_config_help():
     print("     ngpt --config")
     print("     Or specify an index to edit an existing configuration:")
     print("     ngpt --config --config-index 1")
+    print("  7. Remove a configuration at a specific index:")
+    print("     ngpt --config --remove --config-index 1")
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
@@ -72,6 +74,7 @@ def main():
     config_group = parser.add_argument_group('Configuration Options')
     config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
     config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use or edit (default: 0)')
+    config_group.add_argument('--remove', action='store_true', help='Remove the configuration at the specified index (requires --config and --config-index)')
     config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
     config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
     
@@ -106,6 +109,42 @@ def main():
     if args.config is True:  # --config was used without a value
         config_path = get_config_path()
         
+        # Handle configuration removal if --remove flag is present
+        if args.remove:
+            # Validate that config_index is explicitly provided
+            if '--config-index' not in sys.argv:
+                parser.error("--remove requires explicitly specifying --config-index")
+            
+            # Show config details before asking for confirmation
+            configs = load_configs(str(config_path))
+            
+            # Check if index is valid
+            if args.config_index < 0 or args.config_index >= len(configs):
+                print(f"Error: Configuration index {args.config_index} is out of range. Valid range: 0-{len(configs)-1}")
+                return
+            
+            # Show the configuration that will be removed
+            config = configs[args.config_index]
+            print(f"Configuration to remove (index {args.config_index}):")
+            print(f"  Provider: {config.get('provider', 'N/A')}")
+            print(f"  Model: {config.get('model', 'N/A')}")
+            print(f"  Base URL: {config.get('base_url', 'N/A')}")
+            print(f"  API Key: {'[Set]' if config.get('api_key') else '[Not Set]'}")
+            
+            # Ask for confirmation
+            try:
+                print("\nAre you sure you want to remove this configuration? [y/N] ", end='')
+                response = input().lower()
+                if response in ('y', 'yes'):
+                    remove_config_entry(config_path, args.config_index)
+                else:
+                    print("Configuration removal cancelled.")
+            except KeyboardInterrupt:
+                print("\nConfiguration removal cancelled by user.")
+            
+            return
+        
+        # Regular config addition/editing (existing code)
         # If --config-index was not explicitly specified, create a new entry by passing None
         # This will cause add_config_entry to create a new entry at the end of the list
         # Otherwise, edit the existing config at the specified index

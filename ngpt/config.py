@@ -158,3 +158,28 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0) -> Dic
             config[config_key] = os.environ[env_var]
     
     return config 
+
+def remove_config_entry(config_path: Path, config_index: int) -> bool:
+    """
+    Remove a configuration entry at the specified index.
+    Returns True if successful, False otherwise.
+    """
+    configs = load_configs(custom_path=str(config_path))
+    
+    # Check if index is valid
+    if config_index < 0 or config_index >= len(configs):
+        print(f"Error: Configuration index {config_index} is out of range. Valid range: 0-{len(configs)-1}")
+        return False
+    
+    # Remove the config at the specified index
+    removed_config = configs.pop(config_index)
+    
+    try:
+        # Save the updated configs
+        with open(config_path, "w") as f:
+            json.dump(configs, f, indent=2)
+        print(f"Removed configuration at index {config_index} for provider '{removed_config.get('provider', 'Unknown')}'")
+        return True
+    except Exception as e:
+        print(f"Error saving configuration: {e}")
+        return False 
