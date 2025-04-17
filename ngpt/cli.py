@@ -91,6 +91,7 @@ def main():
     mode_exclusive_group = mode_group.add_mutually_exclusive_group()
     mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
     mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
+    mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D or Ctrl+Z on Windows)')
     # Note: --show-config is handled separately and implicitly acts as a mode
     
     # Language option for code mode
@@ -209,7 +210,7 @@ def main():
         return
     
     # Check if prompt is required but not provided
-    if not args.prompt and not (args.shell or args.code):
+    if not args.prompt and not (args.shell or args.code or args.text):
         parser.print_help()
         return
         
@@ -272,6 +273,30 @@ def main():
             generated_code = client.generate_code(prompt, args.language, web_search=args.web_search)
             if generated_code:
                 print(f"\nGenerated code:\n{generated_code}")
+            
+        elif args.text:
+            # Multi-line text input mode
+            if args.prompt is not None:
+                prompt = args.prompt
+            else:
+                try:
+                    print("Enter your multi-line prompt (press Ctrl+D or Ctrl+Z on Windows to submit):")
+                    lines = []
+                    while True:
+                        try:
+                            line = input()
+                            lines.append(line)
+                        except EOFError:
+                            break
+                    prompt = "\n".join(lines)
+                    if not prompt.strip():
+                        print("Empty prompt. Exiting.")
+                        return
+                except KeyboardInterrupt:
+                    print("\nInput cancelled by user. Exiting gracefully.")
+                    sys.exit(130)
+            
+            client.chat(prompt, web_search=args.web_search)
             
         else:
             # Default to chat mode
