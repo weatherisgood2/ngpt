@@ -40,10 +40,12 @@ def show_config_help():
     print("  4. Or provide command line arguments:")
     print("     ngpt --api-key your-key --base-url https://api.example.com --model your-model \"Your prompt\"")
     
-    print("  5. Use --config-index to specify which configuration to use:")
+    print("  5. Use --config-index to specify which configuration to use or edit:")
     print("     ngpt --config-index 1 \"Your prompt\"")
     
-    print("  6. Use --config without arguments to add or edit a configuration:")
+    print("  6. Use --config without arguments to add a new configuration:")
+    print("     ngpt --config")
+    print("     Or specify an index to edit an existing configuration:")
     print("     ngpt --config --config-index 1")
 
 def check_config(config):
@@ -68,8 +70,8 @@ def main():
     
     # Config options
     config_group = parser.add_argument_group('Configuration Options')
-    config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode')
-    config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use (default: 0)')
+    config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
+    config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use or edit (default: 0)')
     config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
     config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
     
@@ -103,7 +105,20 @@ def main():
     # Handle interactive configuration mode
     if args.config is True:  # --config was used without a value
         config_path = get_config_path()
-        add_config_entry(config_path, args.config_index)
+        
+        # If --config-index was not explicitly specified, create a new entry by passing None
+        # This will cause add_config_entry to create a new entry at the end of the list
+        # Otherwise, edit the existing config at the specified index
+        config_index = None if args.config_index == 0 and '--config-index' not in sys.argv else args.config_index
+        
+        # Load existing configs to determine the new index if creating a new config
+        configs = load_configs(str(config_path))
+        if config_index is None:
+            print(f"Creating new configuration at index {len(configs)}")
+        else:
+            print(f"Editing existing configuration at index {config_index}")
+        
+        add_config_entry(config_path, config_index)
         return
     
     # Load configuration using the specified index (needed for active config display)
