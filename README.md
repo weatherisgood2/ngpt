@@ -30,6 +30,9 @@ pip install ngpt
 # Chat with default settings
 ngpt "Tell me about quantum computing"
 
+# Return response without streaming
+ngpt -n "Tell me about quantum computing"
+
 # Generate code
 ngpt --code "function to calculate the Fibonacci sequence"
 
@@ -168,6 +171,7 @@ You can configure the client using the following options:
 | `--base-url` | Base URL for the API |
 | `--model` | Model to use |
 | `--web-search` | Enable web search capability |
+| `-n, --no-stream` | Return the whole response without streaming |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |

@@ -103,6 +103,8 @@ def main():
     global_group.add_argument('--model', help='Model to use')
     global_group.add_argument('--web-search', action='store_true', 
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
+    global_group.add_argument('-n', '--no-stream', action='store_true',
+                      help='Return the whole response without streaming')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -401,7 +403,9 @@ def main():
                     sys.exit(130)
             
             print("\nSubmission successful. Waiting for response...")
-            client.chat(prompt, web_search=args.web_search)
+            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search)
+            if args.no_stream and response:
+                print(response)
             
         else:
             # Default to chat mode
@@ -414,7 +418,9 @@ def main():
                     sys.exit(130)
             else:
                 prompt = args.prompt
-            client.chat(prompt, web_search=args.web_search)
+            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search)
+            if args.no_stream and response:
+                print(response)
     
     except KeyboardInterrupt:
         print("\nOperation cancelled by user. Exiting gracefully.")
