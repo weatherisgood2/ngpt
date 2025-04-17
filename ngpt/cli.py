@@ -112,7 +112,7 @@ def main():
     mode_exclusive_group.add_argument('-s', '--shell', action='store_true', help='Generate and execute shell commands')
     mode_exclusive_group.add_argument('-c', '--code', action='store_true', help='Generate code')
     mode_exclusive_group.add_argument('-t', '--text', action='store_true', help='Enter multi-line text input (submit with Ctrl+D)')
-    # Note: --show-config is handled separately and implicitly acts as a mode
+    mode_exclusive_group.add_argument('-i', '--interactive', action='store_true', help='Start an interactive chat session')
     
     # Language option for code mode
     parser.add_argument('--language', default="python", help='Programming language to generate code in (for code mode)')
@@ -230,7 +230,7 @@ def main():
         return
     
     # Check if prompt is required but not provided
-    if not args.prompt and not (args.shell or args.code or args.text):
+    if not args.prompt and not (args.shell or args.code or args.text or args.interactive):
         parser.print_help()
         return
         
@@ -279,6 +279,139 @@ def main():
                 except subprocess.CalledProcessError as e:
                     print(f"\nError:\n{e.stderr}")
                     
+        elif args.interactive:
+            # Interactive chat mode
+            conversation_history = []
+            print("\033[94m\033[1m" + "Interactive Chat Mode" + "\033[0m")
+            print("Type your messages and press Ctrl+D to send. Type 'exit', 'quit', or use Ctrl+C to exit.")
+            print("Type 'clear' to start a new conversation.")
+            if HAS_PROMPT_TOOLKIT:
+                print("Use arrow keys to navigate, Enter for new line in multi-line mode.")
+            print()
+            
+            try:
+                while True:
+                    try:
+                        # Get user input with prompt_toolkit if available
+                        if HAS_PROMPT_TOOLKIT:
+                            # Create key bindings
+                            kb = KeyBindings()
+                            
+                            # Explicitly bind Ctrl+C to exit
+                            @kb.add('c-c')
+                            def _(event):
+                                event.app.exit(result=None)
+                                print("\nExiting interactive chat mode.")
+                                sys.exit(130)
+                            
+                            # Explicitly bind Ctrl+D to submit
+                            @kb.add('c-d')
+                            def _(event):
+                                event.app.exit(result=event.app.current_buffer.text)
+                            
+                            # Get terminal dimensions
+                            term_width, term_height = shutil.get_terminal_size()
+                            
+                            # Create a styled TextArea
+                            text_area = TextArea(
+                                style="class:input-area",
+                                multiline=True,
+                                wrap_lines=True,
+                                width=term_width - 4,
+                                height=min(10, term_height - 8),
+                                prompt=HTML("<ansiblue>>>> </ansiblue>"),
+                                scrollbar=True,
+                                focus_on_click=True,
+                                lexer=None,
+                            )
+                            text_area.window.right_margins = [ScrollbarMargin(display_arrows=True)]
+                            
+                            # Create a title bar
+                            title_bar = FormattedTextControl(
+                                HTML("<style bg='ansiblue' fg='ansiwhite'><b> NGPT Interactive Chat </b></style>")
+                            )
+                            
+                            # Create a status bar with key bindings and commands info
+                            status_bar = FormattedTextControl(
+                                HTML("<ansiblue><b>Ctrl+D</b></ansiblue>: Submit | <ansiblue><b>Ctrl+C</b></ansiblue>: Exit | Type <ansiblue><b>clear</b></ansiblue> to start new conversation")
+                            )
+                            
+                            # Create the layout
+                            layout = Layout(
+                                HSplit([
+                                    Window(title_bar, height=1),
+                                    Window(height=1, char="-", style="class:separator"),
+                                    text_area,
+                                    Window(height=1, char="-", style="class:separator"),
+                                    Window(status_bar, height=1),
+                                ])
+                            )
+                            
+                            # Create a style
+                            style = Style.from_dict({
+                                "separator": "ansigray",
+                                "input-area": "bg:ansiblack fg:ansiwhite",
+                                "cursor": "bg:ansiwhite fg:ansiblack",
+                            })
+                            
+                            # Create and run the application
+                            app = Application(
+                                layout=layout,
+                                full_screen=False,
+                                key_bindings=kb,
+                                style=style,
+                                mouse_support=True,
+                            )
+                            
+                            user_input = app.run()
+                            if user_input is None:
+                                break
+                        else:
+                            # Fallback to standard input
+                            user_input = input("\033[1m\033[94m>>> \033[0m")
+                        
+                        # Handle special commands
+                        if user_input is None:
+                            break
+                        elif user_input.lower() in ['exit', 'quit', 'q']:
+                            print("Exiting interactive chat mode.")
+                            break
+                        elif user_input.lower() == 'clear':
+                            print("Starting a new conversation.")
+                            conversation_history = []
+                            continue
+                        elif not user_input.strip():
+                            continue
+                        
+                        # Add user message to conversation history
+                        conversation_history.append({"role": "user", "content": user_input})
+                        
+                        # Get response from the model
+                        print("\033[90m" + "AI is thinking..." + "\033[0m")
+                        response = client.chat(
+                            prompt=user_input,
+                            stream=not args.no_stream,
+                            messages=conversation_history,
+                            web_search=args.web_search
+                        )
+                        
+                        # Add assistant message to conversation history
+                        conversation_history.append({"role": "assistant", "content": response})
+                        
+                        # If no streaming, print the response
+                        if args.no_stream and response:
+                            print("\033[92m" + response + "\033[0m")
+                        
+                        print()  # Add spacing between exchanges
+                    
+                    except KeyboardInterrupt:
+                        print("\nExiting interactive chat mode.")
+                        break
+                    
+            except Exception as e:
+                print(f"\nError in interactive mode: {e}")
+                return
+                
         elif args.code:
             if args.prompt is None:
                 try:
