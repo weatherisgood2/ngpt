@@ -259,4 +259,48 @@ Code:"""
             )
         except Exception as e:
             print(f"Error generating code: {e}")
-            return "" 
+            return ""
+
+    def list_models(self) -> list:
+        """
+        Retrieve the list of available models from the API.
+        
+        Returns:
+            List of available model objects or empty list if failed
+        """
+        if not self.api_key:
+            print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
+            return []
+            
+        # Endpoint for models
+        url = f"{self.base_url}models"
+        
+        try:
+            response = requests.get(url, headers=self.headers)
+            response.raise_for_status()  # Raise exception for HTTP errors
+            result = response.json()
+            
+            if "data" in result:
+                return result["data"]
+            else:
+                print("Error: Unexpected response format when retrieving models.")
+                return []
+                
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                print("Error: Authentication failed. Please check your API key.")
+            elif e.response.status_code == 404:
+                print(f"Error: Models endpoint not found at {url}")
+            elif e.response.status_code == 429:
+                print("Error: Rate limit exceeded. Please try again later.")
+            else:
+                print(f"HTTP Error: {e}")
+            return []
+            
+        except requests.exceptions.ConnectionError:
+            print(f"Error: Could not connect to {self.base_url}. Please check your internet connection and base URL.")
+            return []
+            
+        except Exception as e:
+            print(f"Error: An unexpected error occurred while retrieving models: {e}")
+            return [] 

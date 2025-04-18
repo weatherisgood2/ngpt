@@ -87,6 +87,9 @@ ngpt --show-config
 # Show all configurations
 ngpt --show-config --all
 
+# List available models for the current configuration
+ngpt --list-models
+
 # With custom options
 ngpt --api-key your-key --base-url http://your-endpoint --model your-model "Hello"
 
@@ -177,6 +180,7 @@ You can configure the client using the following options:
 | `--api-key` | API key for the service |
 | `--base-url` | Base URL for the API |
 | `--model` | Model to use |
+| `--list-models` | List all available models for the current configuration |
 | `--web-search` | Enable web search capability |
 | `-n, --no-stream` | Return the whole response without streaming |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |

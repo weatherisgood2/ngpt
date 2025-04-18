@@ -68,6 +68,8 @@ def show_config_help():
     print("     ngpt --config --config-index 1")
     print("  7. Remove a configuration at a specific index:")
     print("     ngpt --config --remove --config-index 1")
+    print("  8. List available models for the current configuration:")
+    print("     ngpt --list-models")
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
@@ -273,6 +275,7 @@ def main():
     config_group.add_argument('--remove', action='store_true', help='Remove the configuration at the specified index (requires --config and --config-index)')
     config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
     config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
+    config_group.add_argument('--list-models', action='store_true', help='List all available models for the current configuration and exit')
     
     # Global options
     global_group = parser.add_argument_group('Global Options')
@@ -409,18 +412,35 @@ def main():
         return
     
     # For interactive mode, we'll allow continuing without a specific prompt
-    if not args.prompt and not (args.shell or args.code or args.text or args.interactive):
+    if not args.prompt and not (args.shell or args.code or args.text or args.interactive or args.show_config or args.list_models):
         parser.print_help()
         return
         
     # Check configuration (using the potentially overridden active_config)
-    if not check_config(active_config):
+    if not args.show_config and not args.list_models and not check_config(active_config):
         return
     
     # Initialize client using the potentially overridden active_config
     client = NGPTClient(**active_config)
     
     try:
+        # Handle listing models
+        if args.list_models:
+            print("Retrieving available models...")
+            models = client.list_models()
+            if models:
+                print(f"\nAvailable models for {active_config.get('provider', 'API')}:")
+                print("-" * 50)
+                for model in models:
+                    if "id" in model:
+                        owned_by = f" ({model.get('owned_by', 'Unknown')})" if "owned_by" in model else ""
+                        current = " [active]" if model["id"] == active_config["model"] else ""
+                        print(f"- {model['id']}{owned_by}{current}")
+                print("\nUse --model MODEL_NAME to select a specific model")
+            else:
+                print("No models available or could not retrieve models.")
+            return
+        
         # Handle modes
         if args.interactive:
             # Interactive chat mode
