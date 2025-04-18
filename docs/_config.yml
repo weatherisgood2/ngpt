@@ -1,5 +1,6 @@
 title: nGPT Documentation
 description: A lightweight Python CLI and library for interacting with OpenAI-compatible APIs
+baseurl: /ngpt
 remote_theme: pages-themes/hacker
 plugins:
   - jekyll-remote-theme
