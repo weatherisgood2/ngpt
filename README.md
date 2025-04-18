@@ -3,14 +3,17 @@
 [![PyPI version](https://img.shields.io/pypi/v/ngpt.svg)](https://pypi.org/project/ngpt/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Versions](https://img.shields.io/pypi/pyversions/ngpt.svg)](https://pypi.org/project/ngpt/)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://nazdridoy.github.io/ngpt/)
 
 A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints.
 
 ## Table of Contents
 - [Quick Start](#quick-start)
 - [Features](#features)
+- [Documentation](#documentation)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Documentation](https://nazdridoy.github.io/ngpt/)
   - [CLI Tool](#as-a-cli-tool)
   - [Python Library](#as-a-library)
 - [Configuration](#configuration)
@@ -58,6 +61,12 @@ ngpt --text
 - 💻 **Shell Command Generation**: OS-aware command execution
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
 - 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
+
+## Documentation
+
+Comprehensive documentation, including API reference, usage guides, and examples, is available at:
+
+**[https://nazdridoy.github.io/ngpt/](https://nazdridoy.github.io/ngpt/)**
 
 ## Installation
 

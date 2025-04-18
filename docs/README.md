@@ -17,8 +17,8 @@ Welcome to the documentation for nGPT, a lightweight Python CLI and library for 
   - [Advanced Examples](examples/advanced.md)
   - [Custom Integrations](examples/integrations.md)
 - [Configuration](configuration.md)
-- [Contributing](../CONTRIBUTING.md)
-- [License](../LICENSE)
+- [Contributing](CONTRIBUTING.md)
+- [License](LICENSE)
 
 ## Getting Started
 
