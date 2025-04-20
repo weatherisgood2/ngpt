@@ -103,6 +103,9 @@ ngpt --api-key "your-key" --base-url "https://api.example.com/v1/" --model "cust
 
 # Select a specific configuration by index
 ngpt --config-index 2 "Your prompt here"
+
+# Control response generation parameters
+ngpt --temperature 0.8 --top_p 0.95 --max_length 300 "Write a creative story"
 ```
 
 ## Environment Variables

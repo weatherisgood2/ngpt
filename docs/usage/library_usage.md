@@ -125,6 +125,42 @@ response = client.chat("What are the latest developments in quantum computing?",
 print(response)
 ```
 
+### Controlling Response Generation
+
+You can control the nature of the generated responses by adjusting these parameters:
+
+```python
+# Control randomness (lower = more deterministic, higher = more random)
+response = client.chat("Write a creative story", temperature=0.9)
+
+# Control diversity via nucleus sampling (lower = more focused, higher = more diverse)
+response = client.chat("Generate marketing ideas", top_p=0.8)
+
+# Limit maximum response length in tokens
+response = client.chat("Write a detailed explanation", max_tokens=500)
+
+# Combine multiple parameters
+response = client.chat(
+    "Write a poem about nature",
+    temperature=0.7,
+    top_p=0.9,
+    max_tokens=200
+)
+
+# These parameters work with code and shell command generation too
+code = client.generate_code(
+    "function to calculate prime numbers",
+    temperature=0.4,  # Lower temperature for more precise code
+    max_tokens=300
+)
+
+command = client.generate_shell_command(
+    "find large files",
+    temperature=0.4,  # Lower temperature for more accurate commands
+    max_tokens=100
+)
+```
+
 ### Listing Available Models
 
 List models available through your API endpoint:

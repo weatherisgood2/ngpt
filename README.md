@@ -195,6 +195,9 @@ You can configure the client using the following options:
 | `--list-models` | List all available models for the selected configuration (can be combined with --config-index) |
 | `--web-search` | Enable web search capability |
 | `-n, --no-stream` | Return the whole response without streaming |
+| `--temperature` | Set temperature (controls randomness, default: 0.7) |
+| `--top_p` | Set top_p (controls diversity, default: 1.0) |
+| `--max_length` | Set maximum response length in tokens |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
