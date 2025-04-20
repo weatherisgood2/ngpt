@@ -47,7 +47,7 @@ Here are the most commonly used options:
 | `--web-search` | Enable web search capability (if supported by your API) |
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
-| `--max_length` | Set maximum response length in tokens |
+| `--max_tokens` | Set maximum response length in tokens |
 
 ## Feature Details
 
@@ -270,10 +270,10 @@ Set the maximum response length in tokens:
 
 ```bash
 # Get a concise response
-ngpt --max_length 100 "Explain quantum computing"
+ngpt --max_tokens 100 "Explain quantum computing"
 
 # Allow for a longer, more detailed response
-ngpt --max_length 500 "Write a comprehensive guide to machine learning"
+ngpt --max_tokens 500 "Write a comprehensive guide to machine learning"
 ```
 
 ## Examples by Task
@@ -338,7 +338,6 @@ ngpt --show-config
 # Try specifying the base URL directly
 ngpt --base-url "https://api.example.com/v1/" "Test connection"
 ```
-
 ### Authorization Problems
 
 If you're experiencing authentication issues:

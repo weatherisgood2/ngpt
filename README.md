@@ -230,7 +230,7 @@ You can configure the client using the following options:
 | `-n, --no-stream` | Return the whole response without streaming |
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
-| `--max_length` | Set maximum response length in tokens |
+| `--max_tokens` | Set maximum response length in tokens |
 | `--preprompt` | Set custom system prompt to control AI behavior |
 | `--log` | Set filepath to log conversation to (for interactive modes) |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
