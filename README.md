@@ -55,6 +55,8 @@ ngpt --preprompt "You are a Linux expert" "How do I find large files?"
 ngpt --interactive --log conversation.log
 ```
 
+For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+
 ## Features
 
 - ✅ **Dual Mode**: Use as a CLI tool or import as a Python library
@@ -70,11 +72,20 @@ ngpt --interactive --log conversation.log
 - 🎭 **System Prompts**: Customize model behavior with custom system prompts
 - 📃 **Conversation Logging**: Save your conversations to text files for later reference
 
+See the [Feature Overview](https://nazdridoy.github.io/ngpt/overview.html) for more details.
+
 ## Documentation
 
 Comprehensive documentation, including API reference, usage guides, and examples, is available at:
 
 **[https://nazdridoy.github.io/ngpt/](https://nazdridoy.github.io/ngpt/)**
+
+Key documentation sections:
+- [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html)
+- [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html)
+- [Library Usage Guide](https://nazdridoy.github.io/ngpt/usage/library_usage.html)
+- [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html)
+- [Examples & Tutorials](https://nazdridoy.github.io/ngpt/examples/basic.html)
 
 ## Installation
 
@@ -83,6 +94,8 @@ pip install ngpt
 ```
 
 Requires Python 3.8 or newer.
+
+For detailed installation instructions, see the [Installation Guide](https://nazdridoy.github.io/ngpt/installation.html).
 
 ## Usage
 
@@ -137,6 +150,8 @@ ngpt -c "create a python function that calculates fibonacci numbers"
 ngpt -t
 ```
 
+For more CLI examples and detailed usage information, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+
 ### As a Library
 
 ```python
@@ -169,6 +184,8 @@ command = client.generate_shell_command("list all files")
 code = client.generate_code("create a python function that calculates fibonacci numbers")
 ```
 
+For more library examples and advanced usage, see the [Library Usage Guide](https://nazdridoy.github.io/ngpt/usage/library_usage.html).
+
 #### Advanced Library Usage
 
 ```python
@@ -194,6 +211,8 @@ print(result.stdout)
 code = client.generate_code("function that converts Celsius to Fahrenheit")
 print(code)
 ```
+
+For advanced usage patterns and integrations, check out the [Advanced Examples](https://nazdridoy.github.io/ngpt/examples/advanced.html).
 
 ## Configuration
 
@@ -225,6 +244,8 @@ You can configure the client using the following options:
 | `-t, --text` | Open interactive multiline editor for complex prompts |
 | `-v, --version` | Show version information |
 
+For a complete reference of all available options, see the [CLI Usage Guide](https://nazdridoy.github.io/ngpt/usage/cli_usage.html).
+
 ### Interactive Configuration
 
 The `--config` option without arguments enters interactive configuration mode, allowing you to add or edit configurations:
@@ -245,6 +266,8 @@ In interactive mode:
 - When creating a new configuration, press Enter to use default values
 - For security, your API key is not displayed when editing configurations
 - When removing a configuration, you'll be asked to confirm before deletion
+
+For more details on configuring nGPT, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html).
 
 ### Configuration File
 
@@ -279,6 +302,8 @@ The configuration file uses a JSON list format, allowing you to store multiple c
   }
 ]
 ```
+
+For details on the configuration file format and structure, see the [Configuration Guide](https://nazdridoy.github.io/ngpt/configuration.html).
 
 ### Configuration Priority
 
