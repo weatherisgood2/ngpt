@@ -528,7 +528,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
 def main():
     # Colorize description - use a shorter description to avoid line wrapping issues
     description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
-    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter)
+    
+    # Minimalist, clean epilog design
+    epilog = f"\n{COLORS['yellow']}nGPT {COLORS['bold']}v{__version__}{COLORS['reset']}  •  {COLORS['green']}Docs: {COLORS['bold']}https://nazdridoy.github.io/ngpt/usage/cli_usage.html{COLORS['reset']}"
+    
+    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter, epilog=epilog)
     
     # Add custom error method with color
     original_error = parser.error
