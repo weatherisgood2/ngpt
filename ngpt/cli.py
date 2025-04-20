@@ -5,6 +5,190 @@ from .client import NGPTClient
 from .config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
 from . import __version__
 
+# ANSI color codes for terminal output
+COLORS = {
+    "reset": "\033[0m",
+    "bold": "\033[1m",
+    "cyan": "\033[36m",
+    "green": "\033[32m", 
+    "yellow": "\033[33m",
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "gray": "\033[90m",
+    "bg_blue": "\033[44m",
+    "bg_cyan": "\033[46m"
+}
+
+# Custom help formatter with color support
+class ColoredHelpFormatter(argparse.HelpFormatter):
+    """Help formatter that properly handles ANSI color codes without breaking alignment."""
+    
+    def __init__(self, prog):
+        # Import modules needed for terminal size detection
+        import re
+        import textwrap
+        import shutil
+        
+        # Get terminal size for dynamic width adjustment
+        try:
+            self.term_width = shutil.get_terminal_size().columns
+        except:
+            self.term_width = 80  # Default if we can't detect terminal width
+        
+        # Calculate dynamic layout values based on terminal width
+        self.formatter_width = self.term_width - 2  # Leave some margin
+        
+        # For very wide terminals, limit the width to maintain readability
+        if self.formatter_width > 120:
+            self.formatter_width = 120
+            
+        # Calculate help position based on terminal width (roughly 1/3 of width)
+        self.help_position = min(max(20, int(self.term_width * 0.33)), 36)
+        
+        # Initialize the parent class with dynamic values
+        super().__init__(prog, max_help_position=self.help_position, width=self.formatter_width)
+        
+        # Calculate wrap width based on remaining space after help position
+        self.wrap_width = self.formatter_width - self.help_position - 5
+        
+        # Set up the text wrapper for help text
+        self.ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        self.wrapper = textwrap.TextWrapper(width=self.wrap_width)
+        
+    def _strip_ansi(self, s):
+        """Strip ANSI escape sequences for width calculations"""
+        return self.ansi_escape.sub('', s)
+        
+    def _colorize(self, text, color, bold=False):
+        """Helper to consistently apply color with optional bold"""
+        if bold:
+            return f"{COLORS['bold']}{COLORS[color]}{text}{COLORS['reset']}"
+        return f"{COLORS[color]}{text}{COLORS['reset']}"
+        
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            # For positional arguments
+            metavar = self._format_args(action, action.dest.upper())
+            return self._colorize(metavar, 'cyan', bold=True)
+        else:
+            # For optional arguments with different color for metavar
+            if action.nargs != argparse.SUPPRESS:
+                default = self._get_default_metavar_for_optional(action)
+                args_string = self._format_args(action, default)
+                
+                # Color option name and metavar differently
+                option_part = ', '.join(action.option_strings)
+                colored_option = self._colorize(option_part, 'cyan', bold=True)
+                
+                if args_string:
+                    # Use magenta for metavar
+                    colored_args = self._colorize(args_string, 'magenta')
+                    return f"{colored_option} {colored_args}"
+                else:
+                    return colored_option
+            else:
+                return self._colorize(', '.join(action.option_strings), 'cyan', bold=True)
+        
+    def _format_usage(self, usage, actions, groups, prefix):
+        usage_text = super()._format_usage(usage, actions, groups, prefix)
+        
+        # Replace "usage:" with colored version
+        colored_usage = self._colorize("usage:", 'green', bold=True)
+        usage_text = usage_text.replace("usage:", colored_usage)
+        
+        # We won't color metavars in usage text as it breaks the formatting
+        # Just return with the colored usage prefix
+        return usage_text
+    
+    def _join_parts(self, part_strings):
+        """Override to fix any potential formatting issues with section joins"""
+        return '\n'.join([part for part in part_strings if part])
+        
+    def start_section(self, heading):
+        # Remove the colon as we'll add it with color
+        if heading.endswith(':'):
+            heading = heading[:-1]
+        heading_text = f"{self._colorize(heading, 'yellow', bold=True)}:"
+        super().start_section(heading_text)
+            
+    def _get_help_string(self, action):
+        # Add color to help strings
+        help_text = action.help
+        if help_text:
+            return help_text.replace('(default:', f"{COLORS['gray']}(default:") + COLORS['reset']
+        return help_text
+        
+    def _wrap_help_text(self, text, initial_indent="", subsequent_indent="  "):
+        """Wrap long help text to prevent overflow"""
+        if not text:
+            return text
+            
+        # Strip ANSI codes for width calculation
+        clean_text = self._strip_ansi(text)
+        
+        # If the text is already short enough, return it as is
+        if len(clean_text) <= self.wrap_width:
+            return text
+            
+        # Handle any existing ANSI codes
+        has_ansi = text != clean_text
+        wrap_text = clean_text
+        
+        # Wrap the text
+        lines = self.wrapper.wrap(wrap_text)
+        
+        # Add indentation to all but the first line
+        wrapped = lines[0]
+        for line in lines[1:]:
+            wrapped += f"\n{subsequent_indent}{line}"
+            
+        # Re-add the ANSI codes if they were present
+        if has_ansi and text.endswith(COLORS['reset']):
+            wrapped += COLORS['reset']
+            
+        return wrapped
+        
+    def _format_action(self, action):
+        # For subparsers, just return the regular formatting
+        if isinstance(action, argparse._SubParsersAction):
+            return super()._format_action(action)
+            
+        # Get the action header with colored parts (both option names and metavars)
+        # The coloring is now done in _format_action_invocation
+        action_header = self._format_action_invocation(action)
+        
+        # Format help text
+        help_text = self._expand_help(action)
+        
+        # Get the raw lengths without ANSI codes for formatting
+        raw_header_len = len(self._strip_ansi(action_header))
+        
+        # Calculate the indent for the help text
+        help_position = min(self._action_max_length + 2, self._max_help_position)
+        help_indent = ' ' * help_position
+        
+        # If the action header is too long, put help on the next line
+        if raw_header_len > help_position:
+            # An action header that's too long gets a line break
+            # Wrap the help text with proper indentation
+            wrapped_help = self._wrap_help_text(help_text, subsequent_indent=help_indent)
+            line = f"{action_header}\n{help_indent}{wrapped_help}"
+        else:
+            # Standard formatting with proper spacing
+            padding = ' ' * (help_position - raw_header_len)
+            # Wrap the help text with proper indentation
+            wrapped_help = self._wrap_help_text(help_text, subsequent_indent=help_indent)
+            line = f"{action_header}{padding}{wrapped_help}"
+            
+        # Handle subactions
+        if action.help is argparse.SUPPRESS:
+            return line
+            
+        if not action.help:
+            return line
+            
+        return line
+
 # Optional imports for enhanced UI
 try:
     from prompt_toolkit import prompt as pt_prompt
@@ -26,81 +210,67 @@ except ImportError:
 
 def show_config_help():
     """Display help information about configuration."""
-    print("\nConfiguration Help:")
-    print("  1. Create a config file at one of these locations:")
+    print(f"\n{COLORS['green']}{COLORS['bold']}Configuration Help:{COLORS['reset']}")
+    print(f"  1. {COLORS['cyan']}Create a config file at one of these locations:{COLORS['reset']}")
     if sys.platform == "win32":
-        print(f"     - %APPDATA%\\ngpt\\ngpt.conf")
+        print(f"     - {COLORS['yellow']}%APPDATA%\\ngpt\\ngpt.conf{COLORS['reset']}")
     elif sys.platform == "darwin":
-        print(f"     - ~/Library/Application Support/ngpt/ngpt.conf")
+        print(f"     - {COLORS['yellow']}~/Library/Application Support/ngpt/ngpt.conf{COLORS['reset']}")
     else:
-        print(f"     - ~/.config/ngpt/ngpt.conf")
+        print(f"     - {COLORS['yellow']}~/.config/ngpt/ngpt.conf{COLORS['reset']}")
     
-    print("  2. Format your config file as JSON:")
-    print("""     [
-       {
+    print(f"  2. {COLORS['cyan']}Format your config file as JSON:{COLORS['reset']}")
+    print(f"""{COLORS['yellow']}     [
+       {{
          "api_key": "your-api-key-here",
          "base_url": "https://api.openai.com/v1/",
          "provider": "OpenAI",
          "model": "gpt-3.5-turbo"
-       },
-       {
+       }},
+       {{
          "api_key": "your-second-api-key",
          "base_url": "http://localhost:1337/v1/",
          "provider": "Another Provider",
          "model": "different-model"
-       }
-     ]""")
+       }}
+     ]{COLORS['reset']}""")
     
-    print("  3. Or set environment variables:")
-    print("     - OPENAI_API_KEY")
-    print("     - OPENAI_BASE_URL")
-    print("     - OPENAI_MODEL")
+    print(f"  3. {COLORS['cyan']}Or set environment variables:{COLORS['reset']}")
+    print(f"     - {COLORS['yellow']}OPENAI_API_KEY{COLORS['reset']}")
+    print(f"     - {COLORS['yellow']}OPENAI_BASE_URL{COLORS['reset']}")
+    print(f"     - {COLORS['yellow']}OPENAI_MODEL{COLORS['reset']}")
     
-    print("  4. Or provide command line arguments:")
-    print("     ngpt --api-key your-key --base-url https://api.example.com --model your-model \"Your prompt\"")
+    print(f"  4. {COLORS['cyan']}Or provide command line arguments:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --api-key your-key --base-url https://api.example.com --model your-model \"Your prompt\"{COLORS['reset']}")
     
-    print("  5. Use --config-index to specify which configuration to use or edit:")
-    print("     ngpt --config-index 1 \"Your prompt\"")
+    print(f"  5. {COLORS['cyan']}Use --config-index to specify which configuration to use or edit:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --config-index 1 \"Your prompt\"{COLORS['reset']}")
     
-    print("  6. Use --config without arguments to add a new configuration:")
-    print("     ngpt --config")
-    print("     Or specify an index to edit an existing configuration:")
-    print("     ngpt --config --config-index 1")
-    print("  7. Remove a configuration at a specific index:")
-    print("     ngpt --config --remove --config-index 1")
-    print("  8. List available models for the current configuration:")
-    print("     ngpt --list-models")
+    print(f"  6. {COLORS['cyan']}Use --config without arguments to add a new configuration:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --config{COLORS['reset']}")
+    print(f"     Or specify an index to edit an existing configuration:")
+    print(f"     {COLORS['yellow']}ngpt --config --config-index 1{COLORS['reset']}")
+    print(f"  7. {COLORS['cyan']}Remove a configuration at a specific index:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --config --remove --config-index 1{COLORS['reset']}")
+    print(f"  8. {COLORS['cyan']}List available models for the current configuration:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --list-models{COLORS['reset']}")
 
 def check_config(config):
     """Check config for common issues and provide guidance."""
     if not config.get("api_key"):
-        print("Error: API key is not set.")
+        print(f"{COLORS['yellow']}{COLORS['bold']}Error: API key is not set.{COLORS['reset']}")
         show_config_help()
         return False
         
     # Check for common URL mistakes
     base_url = config.get("base_url", "")
     if base_url and not (base_url.startswith("http://") or base_url.startswith("https://")):
-        print(f"Warning: Base URL '{base_url}' doesn't start with http:// or https://")
+        print(f"{COLORS['yellow']}Warning: Base URL '{base_url}' doesn't start with http:// or https://{COLORS['reset']}")
     
     return True
 
 def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None, log_file=None, preprompt=None):
     """Run an interactive chat session with conversation history."""
-    # Define ANSI color codes for terminal output
-    COLORS = {
-        "reset": "\033[0m",
-        "bold": "\033[1m",
-        "cyan": "\033[36m",
-        "green": "\033[32m", 
-        "yellow": "\033[33m",
-        "blue": "\033[34m",
-        "magenta": "\033[35m",
-        "gray": "\033[90m",
-        "bg_blue": "\033[44m",
-        "bg_cyan": "\033[46m"
-    }
-    
     # Get terminal width for better formatting
     try:
         term_width = shutil.get_terminal_size().columns
@@ -300,10 +470,25 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             log_handle.close()
 
 def main():
-    parser = argparse.ArgumentParser(description="nGPT - A CLI tool for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints")
+    # Colorize description - use a shorter description to avoid line wrapping issues
+    description = f"{COLORS['cyan']}{COLORS['bold']}nGPT{COLORS['reset']} - Interact with AI language models via OpenAI-compatible APIs"
+    parser = argparse.ArgumentParser(description=description, formatter_class=ColoredHelpFormatter)
+    
+    # Add custom error method with color
+    original_error = parser.error
+    def error_with_color(message):
+        parser.print_usage(sys.stderr)
+        parser.exit(2, f"{COLORS['bold']}{COLORS['yellow']}error: {COLORS['reset']}{message}\n")
+    parser.error = error_with_color
+    
+    # Custom version action with color
+    class ColoredVersionAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            print(f"{COLORS['green']}{COLORS['bold']}nGPT{COLORS['reset']} version {COLORS['yellow']}{__version__}{COLORS['reset']}")
+            parser.exit()
     
     # Version flag
-    parser.add_argument('-v', '--version', action='version', version=f'nGPT {__version__}', help='Show version information and exit')
+    parser.add_argument('-v', '--version', action=ColoredVersionAction, nargs=0, help='Show version information and exit')
     
     # Config options
     config_group = parser.add_argument_group('Configuration Options')
