@@ -19,6 +19,55 @@ COLORS = {
     "bg_cyan": "\033[46m"
 }
 
+# Check if ANSI colors are supported
+def supports_ansi_colors():
+    """Check if the current terminal supports ANSI colors."""
+    import os
+    import sys
+    
+    # If not a TTY, probably redirected, so no color
+    if not sys.stdout.isatty():
+        return False
+        
+    # Windows specific checks
+    if sys.platform == "win32":
+        try:
+            # Windows 10+ supports ANSI colors in cmd/PowerShell
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            
+            # Try to enable ANSI color support
+            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+            
+            # Check if TERM_PROGRAM is set (WSL/ConEmu/etc.)
+            if os.environ.get('TERM_PROGRAM') or os.environ.get('WT_SESSION'):
+                return True
+                
+            # Check Windows version - 10+ supports ANSI natively
+            winver = sys.getwindowsversion()
+            if winver.major >= 10:
+                return True
+                
+            return False
+        except Exception:
+            return False
+    
+    # Most UNIX systems support ANSI colors
+    return True
+
+# Initialize color support
+HAS_COLOR = supports_ansi_colors()
+
+# If we're on Windows, use brighter colors that work better in PowerShell
+if sys.platform == "win32" and HAS_COLOR:
+    COLORS["magenta"] = "\033[95m"  # Bright magenta for metavars
+    COLORS["cyan"] = "\033[96m"     # Bright cyan for options
+
+# If no color support, use empty color codes
+if not HAS_COLOR:
+    for key in COLORS:
+        COLORS[key] = ""
+
 # Custom help formatter with color support
 class ColoredHelpFormatter(argparse.HelpFormatter):
     """Help formatter that properly handles ANSI color codes without breaking alignment."""
@@ -81,9 +130,16 @@ class ColoredHelpFormatter(argparse.HelpFormatter):
                 colored_option = self._colorize(option_part, 'cyan', bold=True)
                 
                 if args_string:
-                    # Use magenta for metavar
-                    colored_args = self._colorize(args_string, 'magenta')
-                    return f"{colored_option} {colored_args}"
+                    # Make metavars more visible with brackets and color
+                    # If HAS_COLOR is False, brackets will help in PowerShell
+                    if not HAS_COLOR:
+                        # Add brackets to make metavars stand out even without color
+                        formatted_args = f"<{args_string}>"
+                    else:
+                        # Use color for metavar
+                        formatted_args = self._colorize(args_string, 'magenta')
+                    
+                    return f"{colored_option} {formatted_args}"
                 else:
                     return colored_option
             else:
