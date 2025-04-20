@@ -85,7 +85,7 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None, log_file=None):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None, log_file=None, preprompt=None):
     """Run an interactive chat session with conversation history."""
     # Define ANSI color codes for terminal output
     COLORS = {
@@ -146,10 +146,15 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         print(f"\n{separator}\n")
     
     # Initialize conversation history
-    system_prompt = "You are a helpful assistant."
+    system_prompt = preprompt if preprompt else "You are a helpful assistant."
     conversation = []
     system_message = {"role": "system", "content": system_prompt}
     conversation.append(system_message)
+    
+    # Log system prompt if logging is enabled
+    if log_handle and preprompt:
+        log_handle.write(f"System: {system_prompt}\n\n")
+        log_handle.flush()
     
     # Initialize prompt_toolkit history
     prompt_history = InMemoryHistory() if HAS_PROMPT_TOOLKIT else None
@@ -326,6 +331,8 @@ def main():
                       help='Set max response length in tokens')
     global_group.add_argument('--log', metavar='FILE',
                       help='Set filepath to log conversation to (For interactive modes)')
+    global_group.add_argument('--preprompt', 
+                      help='Set preprompt')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -486,7 +493,7 @@ def main():
             # Interactive chat mode
             interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
                                    temperature=args.temperature, top_p=args.top_p, 
-                                   max_length=args.max_length, log_file=args.log)
+                                   max_length=args.max_length, log_file=args.log, preprompt=args.preprompt)
         elif args.shell:
             if args.prompt is None:
                 try:
@@ -543,7 +550,6 @@ def main():
                 print(f"\nGenerated code:\n{generated_code}")
             
         elif args.text:
-            # Multi-line text input mode
             if args.prompt is not None:
                 prompt = args.prompt
             else:
@@ -651,9 +657,18 @@ def main():
                     sys.exit(130)
             
             print("\nSubmission successful. Waiting for response...")
+            
+            # Create messages array with preprompt if available
+            messages = None
+            if args.preprompt:
+                messages = [
+                    {"role": "system", "content": args.preprompt},
+                    {"role": "user", "content": prompt}
+                ]
+                
             response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_length)
+                               max_tokens=args.max_length, messages=messages)
             if args.no_stream and response:
                 print(response)
             
@@ -668,9 +683,18 @@ def main():
                     sys.exit(130)
             else:
                 prompt = args.prompt
+                
+            # Create messages array with preprompt if available
+            messages = None
+            if args.preprompt:
+                messages = [
+                    {"role": "system", "content": args.preprompt},
+                    {"role": "user", "content": prompt}
+                ]
+                
             response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_length)
+                               max_tokens=args.max_length, messages=messages)
             if args.no_stream and response:
                 print(response)
     
