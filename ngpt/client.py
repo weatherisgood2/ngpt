@@ -30,6 +30,7 @@ class NGPTClient:
         stream: bool = True,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
+        top_p: float = 1.0,
         messages: Optional[List[Dict[str, str]]] = None,
         web_search: bool = False,
         **kwargs
@@ -42,6 +43,7 @@ class NGPTClient:
             stream: Whether to stream the response
             temperature: Controls randomness in the response
             max_tokens: Maximum number of tokens to generate
+            top_p: Controls diversity via nucleus sampling
             messages: Optional list of message objects to override default behavior
             web_search: Whether to enable web search capability
             **kwargs: Additional arguments to pass to the API
@@ -62,6 +64,7 @@ class NGPTClient:
             "messages": messages,
             "stream": stream,
             "temperature": temperature,
+            "top_p": top_p,
         }
         
         # Conditionally add web_search
@@ -158,13 +161,23 @@ class NGPTClient:
             print(f"Error: An unexpected error occurred: {e}")
             return ""
 
-    def generate_shell_command(self, prompt: str, web_search: bool = False) -> str:
+    def generate_shell_command(
+        self, 
+        prompt: str, 
+        web_search: bool = False,
+        temperature: float = 0.4,
+        top_p: float = 0.95,
+        max_length: Optional[int] = None
+    ) -> str:
         """
         Generate a shell command based on the prompt.
         
         Args:
             prompt: Description of the command to generate
             web_search: Whether to enable web search capability
+            temperature: Controls randomness in the response
+            top_p: Controls diversity via nucleus sampling
+            max_length: Maximum number of tokens to generate
             
         Returns:
             The generated shell command
@@ -212,13 +225,24 @@ Command:"""
                 prompt=prompt,
                 stream=False,
                 messages=messages,
-                web_search=web_search
+                web_search=web_search,
+                temperature=temperature,
+                top_p=top_p,
+                max_tokens=max_length
             )
         except Exception as e:
             print(f"Error generating shell command: {e}")
             return ""
 
-    def generate_code(self, prompt: str, language: str = "python", web_search: bool = False) -> str:
+    def generate_code(
+        self, 
+        prompt: str, 
+        language: str = "python", 
+        web_search: bool = False,
+        temperature: float = 0.4,
+        top_p: float = 0.95,
+        max_length: Optional[int] = None
+    ) -> str:
         """
         Generate code based on the prompt.
         
@@ -226,6 +250,9 @@ Command:"""
             prompt: Description of the code to generate
             language: Programming language to generate code in
             web_search: Whether to enable web search capability
+            temperature: Controls randomness in the response
+            top_p: Controls diversity via nucleus sampling
+            max_length: Maximum number of tokens to generate
             
         Returns:
             The generated code
@@ -255,7 +282,10 @@ Code:"""
                 prompt=prompt,
                 stream=False,
                 messages=messages,
-                web_search=web_search
+                web_search=web_search,
+                temperature=temperature,
+                top_p=top_p,
+                max_tokens=max_length
             )
         except Exception as e:
             print(f"Error generating code: {e}")

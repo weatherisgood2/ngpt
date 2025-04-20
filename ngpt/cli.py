@@ -85,7 +85,7 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None):
     """Run an interactive chat session with conversation history."""
     # Define ANSI color codes for terminal output
     COLORS = {
@@ -239,7 +239,10 @@ def interactive_chat_session(client, web_search=False, no_stream=False):
                 prompt=user_input,
                 messages=conversation,
                 stream=not no_stream,
-                web_search=web_search
+                web_search=web_search,
+                temperature=temperature,
+                top_p=top_p,
+                max_length=max_length
             )
             
             # Add AI response to conversation history
@@ -286,6 +289,12 @@ def main():
                       help='Enable web search capability (Note: Your API endpoint must support this feature)')
     global_group.add_argument('-n', '--no-stream', action='store_true',
                       help='Return the whole response without streaming')
+    global_group.add_argument('--temperature', type=float, default=0.7,
+                      help='Set temperature (controls randomness, default: 0.7)')
+    global_group.add_argument('--top_p', type=float, default=1.0,
+                      help='Set top_p (controls diversity, default: 1.0)')
+    global_group.add_argument('--max_length', type=int, 
+                      help='Set max response length in tokens')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -444,7 +453,9 @@ def main():
         # Handle modes
         if args.interactive:
             # Interactive chat mode
-            interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream)
+            interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
+                                   temperature=args.temperature, top_p=args.top_p, 
+                                   max_length=args.max_length)
         elif args.shell:
             if args.prompt is None:
                 try:
@@ -456,7 +467,9 @@ def main():
             else:
                 prompt = args.prompt
                 
-            command = client.generate_shell_command(prompt, web_search=args.web_search)
+            command = client.generate_shell_command(prompt, web_search=args.web_search, 
+                                                 temperature=args.temperature, top_p=args.top_p,
+                                                 max_length=args.max_length)
             if not command:
                 return  # Error already printed by client
                 
@@ -492,7 +505,9 @@ def main():
             else:
                 prompt = args.prompt
                 
-            generated_code = client.generate_code(prompt, args.language, web_search=args.web_search)
+            generated_code = client.generate_code(prompt, args.language, web_search=args.web_search,
+                                              temperature=args.temperature, top_p=args.top_p,
+                                              max_length=args.max_length)
             if generated_code:
                 print(f"\nGenerated code:\n{generated_code}")
             
@@ -605,7 +620,9 @@ def main():
                     sys.exit(130)
             
             print("\nSubmission successful. Waiting for response...")
-            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search)
+            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
+                               temperature=args.temperature, top_p=args.top_p,
+                               max_tokens=args.max_length)
             if args.no_stream and response:
                 print(response)
             
@@ -620,7 +637,9 @@ def main():
                     sys.exit(130)
             else:
                 prompt = args.prompt
-            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search)
+            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
+                               temperature=args.temperature, top_p=args.top_p,
+                               max_tokens=args.max_length)
             if args.no_stream and response:
                 print(response)
     
