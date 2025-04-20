@@ -823,9 +823,9 @@ def main():
                             style="class:input-area",
                             multiline=True,
                             wrap_lines=True,
-                            width=term_width - 4,
-                            height=min(20, term_height - 8),
-                            prompt=HTML("<ansicyan>>>> </ansicyan>"),
+                            width=term_width - 10,
+                            height=min(15, term_height - 10),
+                            prompt=HTML("<ansicyan><b>▶ </b></ansicyan>"),
                             scrollbar=True,
                             focus_on_click=True,
                             lexer=None,
@@ -834,7 +834,7 @@ def main():
                         
                         # Create a title bar
                         title_bar = FormattedTextControl(
-                            HTML("<style bg='ansicyan' fg='ansiblack'><b> NGPT Multi-line Editor </b></style>")
+                            HTML("<ansicyan><b> nGPT Multi-line Editor </b></ansicyan>")
                         )
                         
                         # Create a status bar with key bindings info
@@ -846,17 +846,17 @@ def main():
                         layout = Layout(
                             HSplit([
                                 Window(title_bar, height=1),
-                                Window(height=1, char="-", style="class:separator"),
+                                Window(height=1, char="─", style="class:separator"),
                                 text_area,
-                                Window(height=1, char="-", style="class:separator"),
+                                Window(height=1, char="─", style="class:separator"),
                                 Window(status_bar, height=1),
                             ])
                         )
                         
                         # Create a style
                         style = Style.from_dict({
-                            "separator": "ansigray",
-                            "input-area": "bg:ansiblack fg:ansiwhite",
+                            "separator": "ansicyan",
+                            "input-area": "fg:ansiwhite",
                             "cursor": "bg:ansiwhite fg:ansiblack",
                         })
                         
