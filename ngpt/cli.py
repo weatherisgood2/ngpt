@@ -825,7 +825,7 @@ def main():
                             wrap_lines=True,
                             width=term_width - 10,
                             height=min(15, term_height - 10),
-                            prompt=HTML("<ansicyan><b>▶ </b></ansicyan>"),
+                            prompt=HTML("<ansicyan><b>> </b></ansicyan>"),
                             scrollbar=True,
                             focus_on_click=True,
                             lexer=None,
