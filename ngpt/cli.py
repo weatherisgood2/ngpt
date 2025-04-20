@@ -85,7 +85,7 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None, log_file=None):
     """Run an interactive chat session with conversation history."""
     # Define ANSI color codes for terminal output
     COLORS = {
@@ -126,6 +126,20 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     print(f"  {COLORS['yellow']}exit{COLORS['reset']}    : End session")
     
     print(f"\n{separator}\n")
+    
+    # Initialize log file if provided
+    log_handle = None
+    if log_file:
+        try:
+            import datetime
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            log_handle = open(log_file, 'a', encoding='utf-8')
+            log_handle.write(f"\n--- nGPT Session Log: {sys.argv} ---\n")
+            log_handle.write(f"Started at: {timestamp}\n\n")
+            print(f"{COLORS['green']}Logging conversation to: {log_file}{COLORS['reset']}")
+        except Exception as e:
+            print(f"{COLORS['yellow']}Warning: Could not open log file: {str(e)}{COLORS['reset']}")
+            log_handle = None
     
     # Custom separator - use the same length for consistency
     def print_separator():
@@ -228,6 +242,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             user_message = {"role": "user", "content": user_input}
             conversation.append(user_message)
             
+            # Log user message if logging is enabled
+            if log_handle:
+                log_handle.write(f"User: {user_input}\n")
+                log_handle.flush()
+            
             # Print assistant indicator with formatting
             if not no_stream:
                 print(f"\n{ngpt_header()}: {COLORS['reset']}", end="", flush=True)
@@ -253,6 +272,11 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 # Print response if not streamed
                 if no_stream:
                     print(response)
+                
+                # Log assistant response if logging is enabled
+                if log_handle:
+                    log_handle.write(f"Assistant: {response}\n\n")
+                    log_handle.flush()
             
             # Print separator between exchanges
             print_separator()
@@ -264,9 +288,14 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
         # Print traceback for debugging if it's a serious error
         import traceback
         traceback.print_exc()
+    finally:
+        # Close log file if it was opened
+        if log_handle:
+            log_handle.write(f"\n--- End of Session ---\n")
+            log_handle.close()
 
 def main():
-    parser = argparse.ArgumentParser(description="nGPT - A CLI tool for interacting with custom OpenAI API endpoints")
+    parser = argparse.ArgumentParser(description="nGPT - A CLI tool for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints")
     
     # Version flag
     parser.add_argument('-v', '--version', action='version', version=f'nGPT {__version__}', help='Show version information and exit')
@@ -295,6 +324,8 @@ def main():
                       help='Set top_p (controls diversity, default: 1.0)')
     global_group.add_argument('--max_length', type=int, 
                       help='Set max response length in tokens')
+    global_group.add_argument('--log', metavar='FILE',
+                      help='Set filepath to log conversation to (For interactive modes)')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -455,7 +486,7 @@ def main():
             # Interactive chat mode
             interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
                                    temperature=args.temperature, top_p=args.top_p, 
-                                   max_length=args.max_length)
+                                   max_length=args.max_length, log_file=args.log)
         elif args.shell:
             if args.prompt is None:
                 try:
