@@ -325,7 +325,7 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_length=None, log_file=None, preprompt=None):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None):
     """Run an interactive chat session with conversation history."""
     # Get terminal width for better formatting
     try:
@@ -492,7 +492,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_length
+                max_tokens=max_tokens
             )
             
             # Add AI response to conversation history
@@ -572,12 +572,12 @@ def main():
                       help='Set temperature (controls randomness, default: 0.7)')
     global_group.add_argument('--top_p', type=float, default=1.0,
                       help='Set top_p (controls diversity, default: 1.0)')
-    global_group.add_argument('--max_length', type=int, 
+    global_group.add_argument('--max_tokens', type=int, 
                       help='Set max response length in tokens')
     global_group.add_argument('--log', metavar='FILE',
                       help='Set filepath to log conversation to (For interactive modes)')
     global_group.add_argument('--preprompt', 
-                      help='Set preprompt')
+                      help='Set custom system prompt to control AI behavior')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -738,7 +738,7 @@ def main():
             # Interactive chat mode
             interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
                                    temperature=args.temperature, top_p=args.top_p, 
-                                   max_length=args.max_length, log_file=args.log, preprompt=args.preprompt)
+                                   max_tokens=args.max_tokens, log_file=args.log, preprompt=args.preprompt)
         elif args.shell:
             if args.prompt is None:
                 try:
@@ -752,7 +752,7 @@ def main():
                 
             command = client.generate_shell_command(prompt, web_search=args.web_search, 
                                                  temperature=args.temperature, top_p=args.top_p,
-                                                 max_length=args.max_length)
+                                                 max_tokens=args.max_tokens)
             if not command:
                 return  # Error already printed by client
                 
@@ -790,7 +790,7 @@ def main():
                 
             generated_code = client.generate_code(prompt, args.language, web_search=args.web_search,
                                               temperature=args.temperature, top_p=args.top_p,
-                                              max_length=args.max_length)
+                                              max_tokens=args.max_tokens)
             if generated_code:
                 print(f"\nGenerated code:\n{generated_code}")
             
@@ -913,7 +913,7 @@ def main():
                 
             response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_length, messages=messages)
+                               max_tokens=args.max_tokens, messages=messages)
             if args.no_stream and response:
                 print(response)
             
@@ -939,7 +939,7 @@ def main():
                 
             response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_length, messages=messages)
+                               max_tokens=args.max_tokens, messages=messages)
             if args.no_stream and response:
                 print(response)
     

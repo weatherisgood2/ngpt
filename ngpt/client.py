@@ -167,7 +167,7 @@ class NGPTClient:
         web_search: bool = False,
         temperature: float = 0.4,
         top_p: float = 0.95,
-        max_length: Optional[int] = None
+        max_tokens: Optional[int] = None
     ) -> str:
         """
         Generate a shell command based on the prompt.
@@ -177,7 +177,7 @@ class NGPTClient:
             web_search: Whether to enable web search capability
             temperature: Controls randomness in the response
             top_p: Controls diversity via nucleus sampling
-            max_length: Maximum number of tokens to generate
+            max_tokens: Maximum number of tokens to generate
             
         Returns:
             The generated shell command
@@ -228,7 +228,7 @@ Command:"""
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_length
+                max_tokens=max_tokens
             )
         except Exception as e:
             print(f"Error generating shell command: {e}")
@@ -241,7 +241,7 @@ Command:"""
         web_search: bool = False,
         temperature: float = 0.4,
         top_p: float = 0.95,
-        max_length: Optional[int] = None
+        max_tokens: Optional[int] = None
     ) -> str:
         """
         Generate code based on the prompt.
@@ -252,7 +252,7 @@ Command:"""
             web_search: Whether to enable web search capability
             temperature: Controls randomness in the response
             top_p: Controls diversity via nucleus sampling
-            max_length: Maximum number of tokens to generate
+            max_tokens: Maximum number of tokens to generate
             
         Returns:
             The generated code
@@ -285,7 +285,7 @@ Code:"""
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_length
+                max_tokens=max_tokens
             )
         except Exception as e:
             print(f"Error generating code: {e}")
