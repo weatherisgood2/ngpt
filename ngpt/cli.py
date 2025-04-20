@@ -492,7 +492,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_length=max_length
+                max_tokens=max_length
             )
             
             # Add AI response to conversation history
