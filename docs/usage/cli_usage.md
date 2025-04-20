@@ -42,6 +42,8 @@ Here are the most commonly used options:
 | `-c, --code` | Generate clean code without markdown formatting |
 | `-t, --text` | Open interactive multiline editor for complex prompts |
 | `-v, --version` | Show version information |
+| `--preprompt` | Set custom system prompt to control AI behavior |
+| `--log` | Set filepath to log conversation to (for interactive modes) |
 | `--web-search` | Enable web search capability (if supported by your API) |
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
@@ -72,6 +74,36 @@ This opens a continuous chat session where the AI remembers previous exchanges. 
 - Type your messages and press Enter to send
 - Use arrow keys to navigate message history
 - Press Ctrl+C to exit the session
+
+You can log your conversation to a file for later reference:
+
+```bash
+ngpt -i --log conversation.log
+```
+
+This saves the entire conversation, including both user inputs and AI responses, to the specified file.
+
+### Custom System Prompts
+
+Use custom system prompts to guide the AI's behavior and responses:
+
+```bash
+ngpt --preprompt "You are a Linux command line expert. Focus on efficient solutions." "How do I find the largest files in a directory?"
+```
+
+This replaces the default "You are a helpful assistant" system prompt with your custom instruction.
+
+You can also use custom prompts in interactive mode:
+
+```bash
+ngpt -i --preprompt "You are a Python programming tutor. Explain concepts clearly and provide helpful examples."
+```
+
+Custom prompts can be used to:
+- Set the AI's persona or role
+- Provide background information or context
+- Specify output format preferences
+- Set constraints or guidelines
 
 ### Generating Shell Commands
 
@@ -192,6 +224,12 @@ ngpt -c --web-search "function to get current weather using an API"
 
 # Use a specific model and no streaming
 ngpt --model gpt-4o-mini -n "Explain quantum entanglement"
+
+# Interactive session with custom prompt and logging
+ngpt -i --preprompt "You are a data science tutor" --log datasci_tutoring.txt
+
+# Constrain output format with a custom system prompt
+ngpt --preprompt "Your responses should be concise and include code examples." "How to parse JSON in JavaScript?"
 ```
 
 ### Using a Custom Configuration File
@@ -268,6 +306,9 @@ ngpt "Explain quantum computing for beginners"
 
 # Get current information (with web search)
 ngpt --web-search "What are the latest advancements in AI?"
+
+# Learn with a specialized tutor using custom prompt
+ngpt --preprompt "You are an expert physicist explaining concepts to a beginner. Use analogies and simple language." "Explain quantum entanglement"
 ```
 
 ### Productivity
@@ -279,6 +320,9 @@ ngpt -s "find large files over 100MB and list them by size"
 # Create a structured document
 ngpt -t
 # (Enter multiline text for generating a complex document)
+
+# Log an important session for reference
+ngpt -i --log project_planning.log --preprompt "You are a project management expert helping plan a software project"
 ```
 
 ## Troubleshooting

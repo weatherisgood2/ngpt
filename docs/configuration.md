@@ -106,6 +106,12 @@ ngpt --config-index 2 "Your prompt here"
 
 # Control response generation parameters
 ngpt --temperature 0.8 --top_p 0.95 --max_length 300 "Write a creative story"
+
+# Set a custom system prompt (preprompt)
+ngpt --preprompt "You are a Linux command line expert. Focus on efficient solutions." "How do I find the largest files in a directory?"
+
+# Save conversation to a log file (for interactive modes)
+ngpt --interactive --log conversation.log
 ```
 
 ## Environment Variables

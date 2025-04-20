@@ -61,6 +61,52 @@ response = client.chat("", messages=messages)
 print(response)
 ```
 
+Using preprompts in the CLI:
+
+```bash
+# Make the model respond as a specific expert
+ngpt --preprompt "You are a Linux command line expert. Focus on efficient solutions." \
+     "How do I find the largest files in a directory?"
+
+# Set content and formatting constraints
+ngpt --preprompt "Your responses should be concise and include code examples." \
+     "How to parse JSON in JavaScript?"
+
+# Create a specialized tutor for interactive sessions
+ngpt --interactive --preprompt "You are a Python programming tutor. Explain concepts clearly and provide helpful examples."
+```
+
+### Conversation Logging
+
+Save your conversation history to a file for reference:
+
+```bash
+# Basic interactive session with logging
+ngpt --interactive --log python_tutoring.log
+
+# Combine logging with custom system prompt
+ngpt --interactive \
+     --preprompt "You are a data science expert helping analyze experimental results." \
+     --log data_analysis_session.log
+
+# Log a focused session on a specific topic
+ngpt --interactive \
+     --preprompt "You are helping plan the architecture for a microservices application." \
+     --log architecture_planning.log
+```
+
+The log file contains the complete conversation transcript, including:
+- Session metadata (timestamp, command used)
+- All user messages
+- All AI responses
+- System prompts when custom preprompts are used
+
+This is particularly useful for:
+- Documenting important planning discussions
+- Saving educational sessions for later review
+- Keeping records of complex problem-solving processes
+- Sharing conversations with team members
+
 ## Advanced Conversation Management
 
 ### Managing Conversation History

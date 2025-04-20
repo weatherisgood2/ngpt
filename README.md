@@ -47,6 +47,12 @@ ngpt --shell "list all files in the current directory"
 
 # Use multiline editor for complex prompts
 ngpt --text
+
+# Use custom system prompt
+ngpt --preprompt "You are a Linux expert" "How do I find large files?"
+
+# Log your conversation to a file
+ngpt --interactive --log conversation.log
 ```
 
 ## Features
@@ -61,6 +67,8 @@ ngpt --text
 - 💻 **Shell Command Generation**: OS-aware command execution
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
 - 📝 **Rich Multiline Editor**: Interactive multiline text input with syntax highlighting and intuitive controls
+- 🎭 **System Prompts**: Customize model behavior with custom system prompts
+- 📃 **Conversation Logging**: Save your conversations to text files for later reference
 
 ## Documentation
 
@@ -86,6 +94,12 @@ ngpt "Hello, how are you?"
 
 # Interactive chat session with conversation history
 ngpt -i
+
+# Log conversation to a file
+ngpt --interactive --log conversation.log
+
+# Use custom system prompt to guide AI behavior
+ngpt --preprompt "You are a Python programming tutor" "Explain decorators"
 
 # Show version information
 ngpt -v
@@ -198,6 +212,8 @@ You can configure the client using the following options:
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_length` | Set maximum response length in tokens |
+| `--preprompt` | Set custom system prompt to control AI behavior |
+| `--log` | Set filepath to log conversation to (for interactive modes) |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
