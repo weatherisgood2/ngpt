@@ -151,7 +151,7 @@ Display markdown responses with beautiful formatting and syntax highlighting:
 ngpt --prettify "Explain markdown syntax with examples"
 ```
 
-This renders the AI's response with proper markdown formatting, including:
+This instructs the AI to generate properly formatted markdown responses, which are then rendered with appropriate formatting, including:
 - Syntax highlighting for code blocks
 - Proper rendering of tables
 - Formatted headers, lists, and other markdown elements
@@ -174,6 +174,8 @@ Combine with code generation for syntax-highlighted code:
 ```bash
 ngpt -c --prettify "function to calculate the Fibonacci sequence"
 ```
+
+When using `--prettify` with code generation, the AI will output code in markdown format with proper syntax highlighting based on the language.
 
 See available renderers on your system:
 

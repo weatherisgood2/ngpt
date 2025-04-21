@@ -49,7 +49,7 @@ client = NGPTClient(
 
 ## Chat Method
 
-The primary method for interacting with the AI model.
+The main method for interacting with the AI model.
 
 ```python
 response = client.chat(
@@ -57,8 +57,10 @@ response = client.chat(
     stream: bool = True,
     temperature: float = 0.7,
     max_tokens: Optional[int] = None,
+    top_p: float = 1.0,
     messages: Optional[List[Dict[str, str]]] = None,
     web_search: bool = False,
+    markdown_format: bool = False,
     **kwargs
 ) -> str
 ```
@@ -69,49 +71,55 @@ response = client.chat(
 |-----------|------|---------|-------------|
 | `prompt` | `str` | Required | The user's message |
 | `stream` | `bool` | `True` | Whether to stream the response |
-| `temperature` | `float` | `0.7` | Controls randomness in the response (0.0-1.0) |
+| `temperature` | `float` | `0.7` | Controls randomness in the response |
 | `max_tokens` | `Optional[int]` | `None` | Maximum number of tokens to generate |
-| `messages` | `Optional[List[Dict[str, str]]]` | `None` | Optional list of message objects for conversation history |
+| `top_p` | `float` | `1.0` | Controls diversity via nucleus sampling |
+| `messages` | `Optional[List[Dict[str, str]]]` | `None` | Optional list of message objects to override default behavior |
 | `web_search` | `bool` | `False` | Whether to enable web search capability |
-| `**kwargs` | | | Additional arguments to pass to the API |
+| `markdown_format` | `bool` | `False` | If True, allows markdown formatting in responses |
+| `**kwargs` | `Any` | `{}` | Additional arguments to pass to the API |
 
 ### Returns
 
-- When `stream=False`: A string containing the complete response
-- When `stream=True`: A generator yielding response chunks that can be iterated over
+If `stream=True`, returns chunks of the response as they are generated.
+If `stream=False`, returns the complete response as a string.
 
 ### Examples
 
 ```python
-# Basic chat with streaming
-for chunk in client.chat("Tell me about quantum computing"):
-    print(chunk, end="", flush=True)
-print()  # Final newline
+# Basic usage
+response = client.chat("Tell me about quantum computing")
+print(response)
 
 # Without streaming
 response = client.chat("Tell me about quantum computing", stream=False)
+print(response)
+
+# With custom temperature (higher = more creative, lower = more deterministic)
+response = client.chat("Write a poem about nature", temperature=0.9)
+print(response)
+
+# With token limit
+response = client.chat("Explain the history of AI", max_tokens=100)
 print(response)
 
 # With conversation history
 messages = [
     {"role": "system", "content": "You are a helpful assistant."},
     {"role": "user", "content": "Hello, who are you?"},
-    {"role": "assistant", "content": "I'm an AI assistant. How can I help you today?"},
-    {"role": "user", "content": "Tell me about yourself"}
+    {"role": "assistant", "content": "I'm an AI assistant created to help answer questions and provide information."},
+    {"role": "user", "content": "Tell me more about yourself"}
 ]
 response = client.chat("", messages=messages)
 print(response)
 
-# With web search
-response = client.chat("What's the latest news about AI?", web_search=True)
+# Enable web search capability (if API supports it)
+response = client.chat("What are the latest developments in quantum computing?", web_search=True)
 print(response)
 
-# With temperature control
-response = client.chat("Write a creative story", temperature=0.9)  # More random
-response = client.chat("Explain how a CPU works", temperature=0.2)  # More focused
-
-# With token limit
-response = client.chat("Summarize this concept", max_tokens=100)
+# Enable markdown formatting for rich text responses
+response = client.chat("Create a table comparing programming languages", markdown_format=True)
+print(response)  # Response will contain markdown formatting like tables, code blocks, etc.
 ```
 
 ## Generate Shell Command
@@ -157,13 +165,17 @@ command = client.generate_shell_command(
 
 ## Generate Code
 
-Generates clean code based on the prompt, without markdown formatting or explanations.
+Generates code based on the prompt.
 
 ```python
 code = client.generate_code(
     prompt: str,
     language: str = "python",
-    web_search: bool = False
+    web_search: bool = False,
+    temperature: float = 0.4,
+    top_p: float = 0.95,
+    max_tokens: Optional[int] = None,
+    markdown_format: bool = False
 ) -> str
 ```
 
@@ -174,15 +186,19 @@ code = client.generate_code(
 | `prompt` | `str` | Required | Description of the code to generate |
 | `language` | `str` | `"python"` | Programming language to generate code in |
 | `web_search` | `bool` | `False` | Whether to enable web search capability |
+| `temperature` | `float` | `0.4` | Controls randomness in the response |
+| `top_p` | `float` | `0.95` | Controls diversity via nucleus sampling |
+| `max_tokens` | `Optional[int]` | `None` | Maximum number of tokens to generate |
+| `markdown_format` | `bool` | `False` | If True, returns code with markdown formatting including syntax highlighting |
 
 ### Returns
 
-A string containing the generated code without any markdown formatting or explanations.
+A string containing the generated code. If `markdown_format` is `False`, returns plain text code. If `markdown_format` is `True`, returns code formatted in markdown with appropriate syntax highlighting.
 
 ### Examples
 
 ```python
-# Generate Python code (default)
+# Generate Python code (default, plain text)
 python_code = client.generate_code("function to calculate fibonacci numbers")
 print(python_code)
 
@@ -192,6 +208,15 @@ js_code = client.generate_code(
     language="javascript"
 )
 print(js_code)
+
+# Generate code with markdown formatting for documentation or display
+markdown_code = client.generate_code(
+    "class that implements a binary search tree",
+    language="python",
+    markdown_format=True
+)
+# This will output code wrapped in markdown code blocks with syntax highlighting
+print(markdown_code)
 
 # Generate code with web search for latest best practices
 react_code = client.generate_code(
