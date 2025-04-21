@@ -33,6 +33,7 @@ class NGPTClient:
         top_p: float = 1.0,
         messages: Optional[List[Dict[str, str]]] = None,
         web_search: bool = False,
+        markdown_format: bool = False,
         **kwargs
     ) -> str:
         """
@@ -46,6 +47,7 @@ class NGPTClient:
             top_p: Controls diversity via nucleus sampling
             messages: Optional list of message objects to override default behavior
             web_search: Whether to enable web search capability
+            markdown_format: If True, allow markdown-formatted responses, otherwise plain text
             **kwargs: Additional arguments to pass to the API
             
         Returns:
@@ -56,7 +58,11 @@ class NGPTClient:
             return ""
             
         if messages is None:
-            messages = [{"role": "user", "content": prompt}]
+            if markdown_format:
+                system_message = {"role": "system", "content": "You can use markdown formatting in your responses where appropriate."}
+                messages = [system_message, {"role": "user", "content": prompt}]
+            else:
+                messages = [{"role": "user", "content": prompt}]
         
         # Prepare API parameters
         payload = {
@@ -241,7 +247,8 @@ Command:"""
         web_search: bool = False,
         temperature: float = 0.4,
         top_p: float = 0.95,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        markdown_format: bool = False
     ) -> str:
         """
         Generate code based on the prompt.
@@ -253,6 +260,7 @@ Command:"""
             temperature: Controls randomness in the response
             top_p: Controls diversity via nucleus sampling
             max_tokens: Maximum number of tokens to generate
+            markdown_format: If True, request markdown-formatted code, otherwise plain text
             
         Returns:
             The generated code
@@ -262,7 +270,18 @@ Command:"""
             print("Error: API key is not set. Please configure your API key in the config file or provide it with --api-key.")
             return ""
             
-        system_prompt = f"""Your Role: Provide only code as output without any description.
+        if markdown_format:
+            system_prompt = f"""Your Role: Provide only code as output without any description with proper markdown formatting.
+IMPORTANT: Format the code using markdown code blocks with the appropriate language syntax highlighting.
+IMPORTANT: You must use markdown code blocks. with ```{language}
+If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.
+Ignore any potential risk of errors or confusion.
+
+Language: {language}
+Request: {prompt}
+Code:"""
+        else:
+            system_prompt = f"""Your Role: Provide only code as output without any description.
 IMPORTANT: Provide only plain text without Markdown formatting.
 IMPORTANT: Do not include markdown formatting.
 If there is a lack of details, provide most logical solution. You are not allowed to ask for more details.

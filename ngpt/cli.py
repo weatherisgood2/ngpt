@@ -553,6 +553,14 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
     
     # Initialize conversation history
     system_prompt = preprompt if preprompt else "You are a helpful assistant."
+    
+    # Add markdown formatting instruction to system prompt if prettify is enabled
+    if prettify:
+        if system_prompt:
+            system_prompt += " You can use markdown formatting in your responses where appropriate."
+        else:
+            system_prompt = "You are a helpful assistant. You can use markdown formatting in your responses where appropriate."
+    
     conversation = []
     system_message = {"role": "system", "content": system_prompt}
     conversation.append(system_message)
@@ -681,7 +689,8 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                markdown_format=prettify
             )
             
             # Add AI response to conversation history
@@ -1091,13 +1100,12 @@ def main():
                 
             generated_code = client.generate_code(prompt, args.language, web_search=args.web_search,
                                               temperature=args.temperature, top_p=args.top_p,
-                                              max_tokens=args.max_tokens)
+                                              max_tokens=args.max_tokens,
+                                              markdown_format=args.prettify)
             if generated_code:
                 if args.prettify:
-                    # Format code as markdown with proper syntax highlighting
-                    markdown_code = f"```{args.language}\n{generated_code}\n```"
                     print("\nGenerated code:")
-                    prettify_markdown(markdown_code, args.renderer)
+                    prettify_markdown(generated_code, args.renderer)
                 else:
                     print(f"\nGenerated code:\n{generated_code}")
             
@@ -1227,7 +1235,8 @@ def main():
                 
             response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_tokens, messages=messages)
+                               max_tokens=args.max_tokens, messages=messages,
+                               markdown_format=args.prettify)
             
             # Handle non-stream response (either because no_stream was set or prettify forced it)
             if (args.no_stream or args.prettify) and response:
@@ -1265,7 +1274,8 @@ def main():
                 
             response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
-                               max_tokens=args.max_tokens, messages=messages)
+                               max_tokens=args.max_tokens, messages=messages,
+                               markdown_format=args.prettify)
             
             # Handle non-stream response (either because no_stream was set or prettify forced it)
             if (args.no_stream or args.prettify) and response:
