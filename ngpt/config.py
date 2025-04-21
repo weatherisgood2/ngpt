@@ -75,9 +75,29 @@ def add_config_entry(config_path: Path, config_index: Optional[int] = None) -> N
         if user_input:
             entry["base_url"] = user_input
         
-        user_input = input(f"Provider [{entry['provider']}]: ")
-        if user_input:
-            entry["provider"] = user_input
+        # For provider, check for uniqueness when creating new config
+        provider_unique = False
+        original_provider = entry['provider']
+        while not provider_unique:
+            user_input = input(f"Provider [{entry['provider']}]: ")
+            if user_input:
+                provider = user_input
+            else:
+                provider = entry['provider']
+            
+            # When creating new config or changing provider, check uniqueness
+            if is_existing_config and provider.lower() == original_provider.lower():
+                # No change in provider name, so keep it
+                provider_unique = True
+            elif is_provider_unique(configs, provider, config_index if is_existing_config else None):
+                provider_unique = True
+            else:
+                print(f"Error: Provider '{provider}' already exists. Please choose a unique provider name.")
+                # If it's the existing provider, allow keeping it (for existing configs)
+                if is_existing_config and provider.lower() == original_provider.lower():
+                    provider_unique = True
+        
+        entry["provider"] = provider
         
         user_input = input(f"Model [{entry['model']}]: ")
         if user_input:
@@ -127,12 +147,45 @@ def load_configs(custom_path: Optional[str] = None) -> List[Dict[str, Any]]:
     
     return configs
 
-def load_config(custom_path: Optional[str] = None, config_index: int = 0) -> Dict[str, Any]:
+def load_config(custom_path: Optional[str] = None, config_index: int = 0, provider: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load a specific configuration by index and apply environment variables.
+    Load a specific configuration by index or provider name and apply environment variables.
     Environment variables take precedence over the config file.
+    
+    Args:
+        custom_path: Optional path to a custom config file
+        config_index: Index of the configuration to use (default: 0)
+        provider: Provider name to identify the configuration
+        
+    Returns:
+        The selected configuration with environment variables applied
     """
     configs = load_configs(custom_path)
+    
+    # If provider is specified, try to find a matching config
+    if provider:
+        matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == provider.lower()]
+        
+        if not matching_configs:
+            print(f"Warning: No configuration found for provider '{provider}'. Using default configuration.")
+            config_index = 0
+        elif len(matching_configs) > 1:
+            print(f"Warning: Multiple configurations found for provider '{provider}'.")
+            for i, idx in enumerate(matching_configs):
+                print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
+            
+            try:
+                choice = input("Choose a configuration (or press Enter for the first one): ")
+                if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
+                    config_index = matching_configs[int(choice)]
+                else:
+                    config_index = matching_configs[0]
+                    print(f"Using first matching configuration (index {config_index}).")
+            except (ValueError, IndexError, KeyboardInterrupt):
+                config_index = matching_configs[0]
+                print(f"Using first matching configuration (index {config_index}).")
+        else:
+            config_index = matching_configs[0]
     
     # If config_index is out of range, use the first config
     if config_index < 0 or config_index >= len(configs):
@@ -157,7 +210,7 @@ def load_config(custom_path: Optional[str] = None, config_index: int = 0) -> Dic
         if env_var in os.environ and os.environ[env_var]:
             config[config_key] = os.environ[env_var]
     
-    return config 
+    return config
 
 def remove_config_entry(config_path: Path, config_index: int) -> bool:
     """
@@ -182,4 +235,24 @@ def remove_config_entry(config_path: Path, config_index: int) -> bool:
         return True
     except Exception as e:
         print(f"Error saving configuration: {e}")
-        return False 
+        return False
+
+def is_provider_unique(configs: List[Dict[str, Any]], provider: str, exclude_index: Optional[int] = None) -> bool:
+    """
+    Check if a provider name is unique among configurations.
+    
+    Args:
+        configs: List of configuration dictionaries
+        provider: Provider name to check
+        exclude_index: Optional index to exclude from the check (for updating existing config)
+        
+    Returns:
+        True if the provider name is unique, False otherwise
+    """
+    provider = provider.lower()
+    for i, cfg in enumerate(configs):
+        if i == exclude_index:
+            continue
+        if cfg.get('provider', '').lower() == provider:
+            return False
+    return True 

@@ -302,13 +302,20 @@ def show_config_help():
     print(f"  5. {COLORS['cyan']}Use --config-index to specify which configuration to use or edit:{COLORS['reset']}")
     print(f"     {COLORS['yellow']}ngpt --config-index 1 \"Your prompt\"{COLORS['reset']}")
     
-    print(f"  6. {COLORS['cyan']}Use --config without arguments to add a new configuration:{COLORS['reset']}")
+    print(f"  6. {COLORS['cyan']}Use --provider to specify which configuration to use by provider name:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --provider Gemini \"Your prompt\"{COLORS['reset']}")
+    
+    print(f"  7. {COLORS['cyan']}Use --config without arguments to add a new configuration:{COLORS['reset']}")
     print(f"     {COLORS['yellow']}ngpt --config{COLORS['reset']}")
-    print(f"     Or specify an index to edit an existing configuration:")
+    print(f"     Or specify an index or provider to edit an existing configuration:")
     print(f"     {COLORS['yellow']}ngpt --config --config-index 1{COLORS['reset']}")
-    print(f"  7. {COLORS['cyan']}Remove a configuration at a specific index:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --config --provider Gemini{COLORS['reset']}")
+
+    print(f"  8. {COLORS['cyan']}Remove a configuration by index or provider:{COLORS['reset']}")
     print(f"     {COLORS['yellow']}ngpt --config --remove --config-index 1{COLORS['reset']}")
-    print(f"  8. {COLORS['cyan']}List available models for the current configuration:{COLORS['reset']}")
+    print(f"     {COLORS['yellow']}ngpt --config --remove --provider Gemini{COLORS['reset']}")
+
+    print(f"  9. {COLORS['cyan']}List available models for the current configuration:{COLORS['reset']}")
     print(f"     {COLORS['yellow']}ngpt --list-models{COLORS['reset']}")
 
 def check_config(config):
@@ -467,6 +474,7 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             
             # Skip empty messages but don't raise an error
             if not user_input.strip():
+                print(f"{COLORS['yellow']}Empty message skipped. Type 'exit' to quit.{COLORS['reset']}")
                 continue
             
             # Add user message to conversation
@@ -554,6 +562,7 @@ def main():
     config_group = parser.add_argument_group('Configuration Options')
     config_group.add_argument('--config', nargs='?', const=True, help='Path to a custom config file or, if no value provided, enter interactive configuration mode to create a new config')
     config_group.add_argument('--config-index', type=int, default=0, help='Index of the configuration to use or edit (default: 0)')
+    config_group.add_argument('--provider', help='Provider name to identify the configuration to use')
     config_group.add_argument('--remove', action='store_true', help='Remove the configuration at the specified index (requires --config and --config-index)')
     config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
     config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
@@ -599,6 +608,10 @@ def main():
     # Validate --all usage
     if args.all and not args.show_config:
         parser.error("--all can only be used with --show-config")
+    
+    # Check for mutual exclusivity between --config-index and --provider
+    if args.config_index != 0 and args.provider:
+        parser.error("--config-index and --provider cannot be used together")
 
     # Handle interactive configuration mode
     if args.config is True:  # --config was used without a value
@@ -607,20 +620,46 @@ def main():
         # Handle configuration removal if --remove flag is present
         if args.remove:
             # Validate that config_index is explicitly provided
-            if '--config-index' not in sys.argv:
-                parser.error("--remove requires explicitly specifying --config-index")
+            if '--config-index' not in sys.argv and not args.provider:
+                parser.error("--remove requires explicitly specifying --config-index or --provider")
             
             # Show config details before asking for confirmation
             configs = load_configs(str(config_path))
             
+            # Determine the config index to remove
+            config_index = args.config_index
+            if args.provider:
+                # Find config index by provider name
+                matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == args.provider.lower()]
+                if not matching_configs:
+                    print(f"Error: No configuration found for provider '{args.provider}'")
+                    return
+                elif len(matching_configs) > 1:
+                    print(f"Multiple configurations found for provider '{args.provider}':")
+                    for i, idx in enumerate(matching_configs):
+                        print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
+                    
+                    try:
+                        choice = input("Choose a configuration to remove (or press Enter to cancel): ")
+                        if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
+                            config_index = matching_configs[int(choice)]
+                        else:
+                            print("Configuration removal cancelled.")
+                            return
+                    except (ValueError, IndexError, KeyboardInterrupt):
+                        print("\nConfiguration removal cancelled.")
+                        return
+                else:
+                    config_index = matching_configs[0]
+            
             # Check if index is valid
-            if args.config_index < 0 or args.config_index >= len(configs):
-                print(f"Error: Configuration index {args.config_index} is out of range. Valid range: 0-{len(configs)-1}")
+            if config_index < 0 or config_index >= len(configs):
+                print(f"Error: Configuration index {config_index} is out of range. Valid range: 0-{len(configs)-1}")
                 return
             
             # Show the configuration that will be removed
-            config = configs[args.config_index]
-            print(f"Configuration to remove (index {args.config_index}):")
+            config = configs[config_index]
+            print(f"Configuration to remove (index {config_index}):")
             print(f"  Provider: {config.get('provider', 'N/A')}")
             print(f"  Model: {config.get('model', 'N/A')}")
             print(f"  Base URL: {config.get('base_url', 'N/A')}")
@@ -631,7 +670,7 @@ def main():
                 print("\nAre you sure you want to remove this configuration? [y/N] ", end='')
                 response = input().lower()
                 if response in ('y', 'yes'):
-                    remove_config_entry(config_path, args.config_index)
+                    remove_config_entry(config_path, config_index)
                 else:
                     print("Configuration removal cancelled.")
             except KeyboardInterrupt:
@@ -643,20 +682,51 @@ def main():
         # If --config-index was not explicitly specified, create a new entry by passing None
         # This will cause add_config_entry to create a new entry at the end of the list
         # Otherwise, edit the existing config at the specified index
-        config_index = None if args.config_index == 0 and '--config-index' not in sys.argv else args.config_index
+        config_index = None
         
-        # Load existing configs to determine the new index if creating a new config
-        configs = load_configs(str(config_path))
-        if config_index is None:
-            print(f"Creating new configuration at index {len(configs)}")
-        else:
+        # Determine if we're editing an existing config or creating a new one
+        if args.provider:
+            # Find config by provider name
+            configs = load_configs(str(config_path))
+            matching_configs = [i for i, cfg in enumerate(configs) if cfg.get('provider', '').lower() == args.provider.lower()]
+            
+            if not matching_configs:
+                print(f"No configuration found for provider '{args.provider}'. Creating a new configuration.")
+            elif len(matching_configs) > 1:
+                print(f"Multiple configurations found for provider '{args.provider}':")
+                for i, idx in enumerate(matching_configs):
+                    print(f"  [{i}] Index {idx}: {configs[idx].get('model', 'Unknown model')}")
+                
+                try:
+                    choice = input("Choose a configuration to edit (or press Enter for the first one): ")
+                    if choice and choice.isdigit() and 0 <= int(choice) < len(matching_configs):
+                        config_index = matching_configs[int(choice)]
+                    else:
+                        config_index = matching_configs[0]
+                except (ValueError, IndexError, KeyboardInterrupt):
+                    config_index = matching_configs[0]
+            else:
+                config_index = matching_configs[0]
+                
             print(f"Editing existing configuration at index {config_index}")
+        elif args.config_index != 0 or '--config-index' in sys.argv:
+            # Check if the index is valid
+            configs = load_configs(str(config_path))
+            if args.config_index >= 0 and args.config_index < len(configs):
+                config_index = args.config_index
+                print(f"Editing existing configuration at index {config_index}")
+            else:
+                print(f"Configuration index {args.config_index} is out of range. Creating a new configuration.")
+        else:
+            # Creating a new config
+            configs = load_configs(str(config_path))
+            print(f"Creating new configuration at index {len(configs)}")
         
         add_config_entry(config_path, config_index)
         return
     
-    # Load configuration using the specified index (needed for active config display)
-    active_config = load_config(args.config, args.config_index)
+    # Load configuration using the specified index or provider (needed for active config display)
+    active_config = load_config(args.config, args.config_index, args.provider)
     
     # Command-line arguments override config settings for active config display
     # This part is kept to ensure the active config display reflects potential overrides,
@@ -675,31 +745,57 @@ def main():
         
         print(f"Configuration file: {config_path}")
         print(f"Total configurations: {len(configs)}")
-        print(f"Active configuration index: {args.config_index}")
+        
+        # Determine active configuration and display identifier
+        active_identifier = f"index {args.config_index}"
+        if args.provider:
+            active_identifier = f"provider '{args.provider}'"
+        print(f"Active configuration: {active_identifier}")
 
         if args.all:
             # Show details for all configurations
             print("\nAll configuration details:")
             for i, cfg in enumerate(configs):
-                active_str = '(Active)' if i == args.config_index else ''
-                print(f"\n--- Configuration Index {i} {active_str} ---")
+                provider = cfg.get('provider', 'N/A')
+                active_str = '(Active)' if (
+                    (args.provider and provider.lower() == args.provider.lower()) or 
+                    (not args.provider and i == args.config_index)
+                ) else ''
+                print(f"\n--- Configuration Index {i} / Provider: {COLORS['green']}{provider}{COLORS['reset']} {active_str} ---")
                 print(f"  API Key: {'[Set]' if cfg.get('api_key') else '[Not Set]'}")
                 print(f"  Base URL: {cfg.get('base_url', 'N/A')}")
-                print(f"  Provider: {cfg.get('provider', 'N/A')}")
                 print(f"  Model: {cfg.get('model', 'N/A')}")
         else:
             # Show active config details and summary list
             print("\nActive configuration details:")
+            print(f"  Provider: {COLORS['green']}{active_config.get('provider', 'N/A')}{COLORS['reset']}")
             print(f"  API Key: {'[Set]' if active_config.get('api_key') else '[Not Set]'}")
             print(f"  Base URL: {active_config.get('base_url', 'N/A')}")
-            print(f"  Provider: {active_config.get('provider', 'N/A')}")
             print(f"  Model: {active_config.get('model', 'N/A')}")
             
             if len(configs) > 1:
                 print("\nAvailable configurations:")
+                # Check for duplicate provider names for warning
+                provider_counts = {}
+                for cfg in configs:
+                    provider = cfg.get('provider', 'N/A').lower()
+                    provider_counts[provider] = provider_counts.get(provider, 0) + 1
+                
                 for i, cfg in enumerate(configs):
-                    active_marker = "*" if i == args.config_index else " "
-                    print(f"[{i}]{active_marker} {cfg.get('provider', 'N/A')} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
+                    provider = cfg.get('provider', 'N/A')
+                    provider_display = provider
+                    # Add warning for duplicate providers
+                    if provider_counts.get(provider.lower(), 0) > 1:
+                        provider_display = f"{provider} {COLORS['yellow']}(duplicate){COLORS['reset']}"
+                    
+                    active_marker = "*" if (
+                        (args.provider and provider.lower() == args.provider.lower()) or 
+                        (not args.provider and i == args.config_index)
+                    ) else " "
+                    print(f"[{i}]{active_marker} {COLORS['green']}{provider_display}{COLORS['reset']} - {cfg.get('model', 'N/A')} ({'[API Key Set]' if cfg.get('api_key') else '[API Key Not Set]'})")
+                
+                # Show instruction for using --provider
+                print(f"\nTip: Use {COLORS['yellow']}--provider NAME{COLORS['reset']} to select a configuration by provider name.")
         
         return
     
