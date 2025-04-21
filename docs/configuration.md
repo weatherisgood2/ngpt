@@ -87,8 +87,14 @@ ngpt --config
 # Edit an existing configuration at index 1
 ngpt --config --config-index 1
 
+# Edit an existing configuration by provider name
+ngpt --config --provider Gemini
+
 # Remove a configuration at index 2
 ngpt --config --remove --config-index 2
+
+# Remove a configuration by provider name
+ngpt --config --remove --provider Gemini
 ```
 
 The interactive configuration will prompt you for values and guide you through the process.
@@ -103,6 +109,9 @@ ngpt --api-key "your-key" --base-url "https://api.example.com/v1/" --model "cust
 
 # Select a specific configuration by index
 ngpt --config-index 2 "Your prompt here"
+
+# Select a specific configuration by provider name
+ngpt --provider Gemini "Your prompt here"
 
 # Control response generation parameters
 ngpt --temperature 0.8 --top_p 0.95 --max_tokens 300 "Write a creative story"
@@ -158,6 +167,11 @@ ngpt --config-index 1 "Tell me about quantum computing"
 
 # Use local Ollama (config at index 2)
 ngpt --config-index 2 "Tell me about quantum computing"
+
+# Or use provider names instead of indices (more intuitive)
+ngpt --provider OpenAI "Tell me about quantum computing"
+ngpt --provider Groq "Tell me about quantum computing"
+ngpt --provider Ollama-Local "Tell me about quantum computing"
 ```
 
 ### Programmatically Loading Configurations
@@ -167,12 +181,12 @@ In your Python code, you can load and use different configurations:
 ```python
 from ngpt import NGPTClient, load_config
 
-# Load OpenAI configuration
+# Load OpenAI configuration by index
 openai_config = load_config(config_index=0)
 openai_client = NGPTClient(**openai_config)
 
-# Load Groq configuration
-groq_config = load_config(config_index=1)
+# Load Groq configuration by provider name
+groq_config = load_config(provider="Groq")
 groq_client = NGPTClient(**groq_config)
 
 # Use the clients

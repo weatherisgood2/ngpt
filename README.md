@@ -235,6 +235,7 @@ You can configure the client using the following options:
 | `--log` | Set filepath to log conversation to (for interactive modes) |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
+| `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
 | `--remove` | Remove the configuration at the specified index (requires --config and --config-index) |
 | `--show-config` | Show configuration details and exit |
 | `--all` | Used with `--show-config` to display all configurations |
@@ -257,8 +258,17 @@ ngpt --config
 # Edit an existing configuration at index 1
 ngpt --config --config-index 1
 
+# Edit an existing configuration by provider name
+ngpt --config --provider Gemini
+
 # Remove a configuration at index 2
 ngpt --config --remove --config-index 2
+
+# Remove a configuration by provider name
+ngpt --config --remove --provider Gemini
+
+# Use a specific configuration by provider name
+ngpt --provider OpenAI "Tell me about quantum computing"
 ```
 
 In interactive mode:

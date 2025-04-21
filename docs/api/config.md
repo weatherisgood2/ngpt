@@ -122,7 +122,7 @@ custom_configs = load_configs("/path/to/custom/config.json")
 
 ### load_config()
 
-Loads a specific configuration by index and applies environment variables.
+Loads a specific configuration by index or provider name and applies environment variables.
 
 ```python
 from ngpt.config import load_config
@@ -130,7 +130,8 @@ from typing import Dict, Any
 
 config: Dict[str, Any] = load_config(
     custom_path: Optional[str] = None,
-    config_index: int = 0
+    config_index: int = 0,
+    provider: Optional[str] = None
 )
 ```
 
@@ -140,6 +141,7 @@ config: Dict[str, Any] = load_config(
 |-----------|------|---------|-------------|
 | `custom_path` | `Optional[str]` | `None` | Optional custom path to the configuration file |
 | `config_index` | `int` | `0` | Index of the configuration to load (0-based) |
+| `provider` | `Optional[str]` | `None` | Provider name to identify the configuration to use (alternative to config_index) |
 
 #### Returns
 
@@ -159,6 +161,11 @@ print(f"Using model: {config.get('model', 'Unknown')}")
 config_1 = load_config(config_index=1)
 print(f"Using provider: {config_1.get('provider', 'Unknown')}")
 print(f"Using model: {config_1.get('model', 'Unknown')}")
+
+# Load a specific configuration by provider name
+gemini_config = load_config(provider="Gemini")
+print(f"Using provider: {gemini_config.get('provider', 'Unknown')}")
+print(f"Using model: {gemini_config.get('model', 'Unknown')}")
 
 # Load from a custom path
 custom_config = load_config(custom_path="/path/to/custom/config.json")
@@ -275,6 +282,57 @@ if success:
     print("Configuration removed successfully")
 else:
     print("Failed to remove configuration")
+```
+
+### is_provider_unique()
+
+Checks if a provider name is unique among configurations.
+
+```python
+from ngpt.config import is_provider_unique
+from typing import List, Dict, Any, Optional
+
+is_unique: bool = is_provider_unique(
+    configs: List[Dict[str, Any]],
+    provider: str,
+    exclude_index: Optional[int] = None
+)
+```
+
+#### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `configs` | `List[Dict[str, Any]]` | Required | List of configuration dictionaries |
+| `provider` | `str` | Required | Provider name to check for uniqueness |
+| `exclude_index` | `Optional[int]` | `None` | Optional index to exclude from the check (useful when updating an existing config) |
+
+#### Returns
+
+`True` if the provider name is unique among all configurations, `False` otherwise.
+
+#### Examples
+
+```python
+from ngpt.config import load_configs, is_provider_unique
+
+# Load all configurations
+configs = load_configs()
+
+# Check if a provider name is unique
+provider_name = "New Provider"
+if is_provider_unique(configs, provider_name):
+    print(f"'{provider_name}' is a unique provider name")
+else:
+    print(f"'{provider_name}' is already used by another configuration")
+
+# Check if provider name is unique when updating an existing config
+existing_idx = 1
+update_provider = "Updated Provider"
+if is_provider_unique(configs, update_provider, exclude_index=existing_idx):
+    print(f"'{update_provider}' is unique and can be used to update config at index {existing_idx}")
+else:
+    print(f"'{update_provider}' is already used by another configuration")
 ```
 
 ## Complete Examples

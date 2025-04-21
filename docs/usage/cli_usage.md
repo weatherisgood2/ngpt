@@ -48,6 +48,8 @@ Here are the most commonly used options:
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_tokens` | Set maximum response length in tokens |
+| `--config-index` | Index of the configuration to use (default: 0) |
+| `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
 
 ## Feature Details
 
@@ -172,6 +174,12 @@ Select a specific configuration by index:
 ngpt --config-index 1 "Your prompt here"
 ```
 
+Select a specific configuration by provider name:
+
+```bash
+ngpt --provider Gemini "Your prompt here"
+```
+
 Specify API credentials directly:
 
 ```bash
@@ -186,16 +194,28 @@ Add a new configuration interactively:
 ngpt --config
 ```
 
-Edit an existing configuration:
+Edit an existing configuration by index:
 
 ```bash
 ngpt --config --config-index 1
 ```
 
-Remove a configuration:
+Edit an existing configuration by provider name:
+
+```bash
+ngpt --config --provider Gemini
+```
+
+Remove a configuration by index:
 
 ```bash
 ngpt --config --remove --config-index 2
+```
+
+Remove a configuration by provider name:
+
+```bash
+ngpt --config --remove --provider Gemini
 ```
 
 ### Model Management
