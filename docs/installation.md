@@ -8,6 +8,10 @@ There are several ways to install nGPT depending on your needs and environment.
 - `requests` library (automatically installed as a dependency)
 - `prompt_toolkit` library (automatically installed as a dependency)
 
+## Optional Dependencies
+
+- `rich` library - For enhanced markdown rendering with syntax highlighting
+
 ## Installing from PyPI (Recommended)
 
 The simplest way to install nGPT is through the Python Package Index (PyPI):
@@ -17,6 +21,18 @@ pip install ngpt
 ```
 
 This will install the latest stable release of nGPT and all its dependencies.
+
+For markdown rendering capabilities, install with the prettify extra:
+
+```bash
+pip install ngpt[prettify]
+```
+
+Alternatively, you can install the optional dependency separately:
+
+```bash
+pip install rich
+```
 
 ## Installing in a Virtual Environment
 

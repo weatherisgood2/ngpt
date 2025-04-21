@@ -18,6 +18,8 @@ nGPT is a lightweight Python library and command-line interface (CLI) tool desig
 
 - **Web Search Integration**: Works with compatible API endpoints that support web search capabilities.
 
+- **Markdown Rendering**: Beautiful formatting of markdown responses and syntax highlighting for code.
+
 - **Multiple Configuration Support**: Maintain different API configurations for various services or models.
 
 - **Shell Command Generation**: Generate OS-aware commands that work on your specific platform.

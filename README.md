@@ -42,8 +42,17 @@ ngpt -n "Tell me about quantum computing"
 # Generate code
 ngpt --code "function to calculate the Fibonacci sequence"
 
+# Generate code with syntax highlighting
+ngpt --code --prettify "function to calculate the Fibonacci sequence"
+
 # Generate and execute shell commands
 ngpt --shell "list all files in the current directory"
+
+# Display markdown responses with beautiful formatting
+ngpt --prettify "Explain markdown syntax with examples"
+
+# Use a specific markdown renderer
+ngpt --prettify --renderer=rich "Create a markdown table"
 
 # Use multiline editor for complex prompts
 ngpt --text
@@ -65,6 +74,7 @@ For more examples and detailed usage, visit the [CLI Usage Guide](https://nazdri
 - 💬 **Interactive Chat**: Continuous conversation with memory in modern UI
 - 📊 **Streaming Responses**: Real-time output for better user experience
 - 🔍 **Web Search**: Integrated with compatible API endpoints
+- 🎨 **Markdown Rendering**: Beautiful formatting of markdown and code with syntax highlighting
 - ⚙️ **Multiple Configurations**: Cross-platform config system supporting different profiles
 - 💻 **Shell Command Generation**: OS-aware command execution
 - 🧩 **Clean Code Generation**: Output code without markdown or explanations
@@ -233,6 +243,9 @@ You can configure the client using the following options:
 | `--max_tokens` | Set maximum response length in tokens |
 | `--preprompt` | Set custom system prompt to control AI behavior |
 | `--log` | Set filepath to log conversation to (for interactive modes) |
+| `--prettify` | Render markdown responses and code with syntax highlighting |
+| `--renderer` | Select which markdown renderer to use with --prettify (auto, rich, or glow) |
+| `--list-renderers` | Show available markdown renderers for use with --prettify |
 | `--config` | Path to a custom configuration file or, when used without a value, enters interactive configuration mode |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |

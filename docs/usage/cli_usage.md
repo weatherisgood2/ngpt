@@ -48,6 +48,9 @@ Here are the most commonly used options:
 | `--temperature` | Set temperature (controls randomness, default: 0.7) |
 | `--top_p` | Set top_p (controls diversity, default: 1.0) |
 | `--max_tokens` | Set maximum response length in tokens |
+| `--prettify` | Render markdown responses and code with syntax highlighting |
+| `--renderer` | Select which markdown renderer to use (auto, rich, or glow) |
+| `--list-renderers` | Show available markdown renderers on your system |
 | `--config-index` | Index of the configuration to use (default: 0) |
 | `--provider` | Provider name to identify the configuration to use (alternative to --config-index) |
 
@@ -139,6 +142,44 @@ This opens an editor where you can:
 - Write and edit multiline text
 - Press Ctrl+D or F10 to submit the text
 - Press Esc to cancel
+
+### Markdown Rendering
+
+Display markdown responses with beautiful formatting and syntax highlighting:
+
+```bash
+ngpt --prettify "Explain markdown syntax with examples"
+```
+
+This renders the AI's response with proper markdown formatting, including:
+- Syntax highlighting for code blocks
+- Proper rendering of tables
+- Formatted headers, lists, and other markdown elements
+
+You can specify which markdown renderer to use:
+
+```bash
+# Use Rich (Python library) renderer
+ngpt --prettify --renderer=rich "Create a markdown table comparing programming languages"
+
+# Use Glow (terminal-based) renderer
+ngpt --prettify --renderer=glow "Write documentation with code examples"
+
+# Use automatic selection (default is Rich if available)
+ngpt --prettify --renderer=auto "Explain blockchain with code examples"
+```
+
+Combine with code generation for syntax-highlighted code:
+
+```bash
+ngpt -c --prettify "function to calculate the Fibonacci sequence"
+```
+
+See available renderers on your system:
+
+```bash
+ngpt --list-renderers
+```
 
 ### Using Web Search
 
@@ -248,8 +289,14 @@ ngpt --model gpt-4o-mini -n "Explain quantum entanglement"
 # Interactive session with custom prompt and logging
 ngpt -i --preprompt "You are a data science tutor" --log datasci_tutoring.txt
 
-# Constrain output format with a custom system prompt
-ngpt --preprompt "Your responses should be concise and include code examples." "How to parse JSON in JavaScript?"
+# Generate code with syntax highlighting
+ngpt -c --prettify "create a sorting algorithm"
+
+# Render markdown with web search for up-to-date information
+ngpt --prettify --web-search "Create a markdown table of recent SpaceX launches"
+
+# Interactive session with markdown rendering
+ngpt -i --prettify --renderer=rich
 ```
 
 ### Using a Custom Configuration File
