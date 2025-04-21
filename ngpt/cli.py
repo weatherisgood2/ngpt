@@ -5,6 +5,23 @@ from .client import NGPTClient
 from .config import load_config, get_config_path, load_configs, add_config_entry, remove_config_entry
 from . import __version__
 
+# Try to import markdown rendering libraries
+try:
+    import rich
+    from rich.markdown import Markdown
+    from rich.console import Console
+    HAS_RICH = True
+except ImportError:
+    HAS_RICH = False
+
+# Try to import the glow command if available
+def has_glow_installed():
+    """Check if glow is installed in the system."""
+    import shutil
+    return shutil.which("glow") is not None
+
+HAS_GLOW = has_glow_installed()
+
 # ANSI color codes for terminal output
 COLORS = {
     "reset": "\033[0m",
@@ -67,6 +84,162 @@ if sys.platform == "win32" and HAS_COLOR:
 if not HAS_COLOR:
     for key in COLORS:
         COLORS[key] = ""
+
+def has_markdown_renderer(renderer='auto'):
+    """Check if the specified markdown renderer is available.
+    
+    Args:
+        renderer (str): Which renderer to check: 'auto', 'rich', or 'glow'
+    
+    Returns:
+        bool: True if the renderer is available, False otherwise
+    """
+    if renderer == 'auto':
+        return HAS_RICH or HAS_GLOW
+    elif renderer == 'rich':
+        return HAS_RICH
+    elif renderer == 'glow':
+        return HAS_GLOW
+    else:
+        return False
+
+def show_available_renderers():
+    """Show which markdown renderers are available and their status."""
+    print(f"\n{COLORS['cyan']}{COLORS['bold']}Available Markdown Renderers:{COLORS['reset']}")
+    
+    if HAS_GLOW:
+        print(f"  {COLORS['green']}✓ Glow{COLORS['reset']} - Terminal-based Markdown renderer")
+    else:
+        print(f"  {COLORS['yellow']}✗ Glow{COLORS['reset']} - Not installed (https://github.com/charmbracelet/glow)")
+        
+    if HAS_RICH:
+        print(f"  {COLORS['green']}✓ Rich{COLORS['reset']} - Python library for terminal formatting (Recommended)")
+    else:
+        print(f"  {COLORS['yellow']}✗ Rich{COLORS['reset']} - Not installed (pip install rich)")
+        
+    if not HAS_GLOW and not HAS_RICH:
+        print(f"\n{COLORS['yellow']}To enable prettified markdown output, install one of the above renderers.{COLORS['reset']}")
+    else:
+        renderers = []
+        if HAS_RICH:
+            renderers.append("rich")
+        if HAS_GLOW:
+            renderers.append("glow")
+        print(f"\n{COLORS['green']}Usage examples:{COLORS['reset']}")
+        print(f"  ngpt --prettify \"Your prompt here\"                {COLORS['gray']}# Beautify markdown responses{COLORS['reset']}")
+        print(f"  ngpt -c --prettify \"Write a sort function\"        {COLORS['gray']}# Syntax highlight generated code{COLORS['reset']}")
+        if renderers:
+            renderer = renderers[0]
+            print(f"  ngpt --prettify --renderer={renderer} \"Your prompt\"  {COLORS['gray']}# Specify renderer{COLORS['reset']}")
+    
+    print("")
+
+def warn_if_no_markdown_renderer(renderer='auto'):
+    """Warn the user if the specified markdown renderer is not available.
+    
+    Args:
+        renderer (str): Which renderer to check: 'auto', 'rich', or 'glow'
+    
+    Returns:
+        bool: True if the renderer is available, False otherwise
+    """
+    if has_markdown_renderer(renderer):
+        return True
+    
+    if renderer == 'auto':
+        print(f"{COLORS['yellow']}Warning: No markdown rendering library available.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install 'rich' package with: pip install rich{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Or install 'glow' from https://github.com/charmbracelet/glow{COLORS['reset']}")
+    elif renderer == 'rich':
+        print(f"{COLORS['yellow']}Warning: Rich is not available.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install with: pip install rich{COLORS['reset']}")
+    elif renderer == 'glow':
+        print(f"{COLORS['yellow']}Warning: Glow is not available.{COLORS['reset']}")
+        print(f"{COLORS['yellow']}Install from https://github.com/charmbracelet/glow{COLORS['reset']}")
+    else:
+        print(f"{COLORS['yellow']}Error: Invalid renderer '{renderer}'. Use 'auto', 'rich', or 'glow'.{COLORS['reset']}")
+    
+    return False
+
+def prettify_markdown(text, renderer='auto'):
+    """Render markdown text with beautiful formatting using either Rich or Glow.
+    
+    The function handles both general markdown and code blocks with syntax highlighting.
+    For code generation mode, it automatically wraps the code in markdown code blocks.
+    
+    Args:
+        text (str): Markdown text to render
+        renderer (str): Which renderer to use: 'auto', 'rich', or 'glow'
+        
+    Returns:
+        bool: True if rendering was successful, False otherwise
+    """
+    # For 'auto', prefer rich if available, otherwise use glow
+    if renderer == 'auto':
+        if HAS_RICH:
+            return prettify_markdown(text, 'rich')
+        elif HAS_GLOW:
+            return prettify_markdown(text, 'glow')
+        else:
+            return False
+    
+    # Use glow for rendering
+    elif renderer == 'glow':
+        if not HAS_GLOW:
+            print(f"{COLORS['yellow']}Warning: Glow is not available. Install from https://github.com/charmbracelet/glow{COLORS['reset']}")
+            # Fall back to rich if available
+            if HAS_RICH:
+                print(f"{COLORS['yellow']}Falling back to Rich renderer.{COLORS['reset']}")
+                return prettify_markdown(text, 'rich')
+            return False
+            
+        # Use glow
+        import tempfile
+        import subprocess
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as temp:
+            temp_filename = temp.name
+            temp.write(text)
+            
+        try:
+            # Execute glow on the temporary file
+            subprocess.run(["glow", temp_filename], check=True)
+            os.unlink(temp_filename)
+            return True
+        except Exception as e:
+            print(f"{COLORS['yellow']}Error using glow: {str(e)}{COLORS['reset']}")
+            os.unlink(temp_filename)
+            
+            # Fall back to rich if available
+            if HAS_RICH:
+                print(f"{COLORS['yellow']}Falling back to Rich renderer.{COLORS['reset']}")
+                return prettify_markdown(text, 'rich')
+            return False
+    
+    # Use rich for rendering
+    elif renderer == 'rich':
+        if not HAS_RICH:
+            print(f"{COLORS['yellow']}Warning: Rich is not available. Install with: pip install rich{COLORS['reset']}")
+            # Fall back to glow if available
+            if HAS_GLOW:
+                print(f"{COLORS['yellow']}Falling back to Glow renderer.{COLORS['reset']}")
+                return prettify_markdown(text, 'glow')
+            return False
+            
+        # Use rich
+        try:
+            console = Console()
+            md = Markdown(text)
+            console.print(md)
+            return True
+        except Exception as e:
+            print(f"{COLORS['yellow']}Error using rich for markdown: {str(e)}{COLORS['reset']}")
+            return False
+    
+    # Invalid renderer specified
+    else:
+        print(f"{COLORS['yellow']}Error: Invalid renderer '{renderer}'. Use 'auto', 'rich', or 'glow'.{COLORS['reset']}")
+        return False
 
 # Custom help formatter with color support
 class ColoredHelpFormatter(argparse.HelpFormatter):
@@ -332,7 +505,7 @@ def check_config(config):
     
     return True
 
-def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None):
+def interactive_chat_session(client, web_search=False, no_stream=False, temperature=0.7, top_p=1.0, max_tokens=None, log_file=None, preprompt=None, prettify=False, renderer='auto'):
     """Run an interactive chat session with conversation history."""
     # Get terminal width for better formatting
     try:
@@ -492,11 +665,19 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
             else:
                 print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
             
+            # If prettify is enabled, we need to disable streaming to collect the full response
+            should_stream = not no_stream and not prettify
+            
+            # If prettify is enabled with streaming, inform the user
+            if prettify and not no_stream:
+                print(f"\n{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
+                print(f"\n{ngpt_header()}: {COLORS['reset']}", flush=True)
+            
             # Get AI response with conversation history
             response = client.chat(
                 prompt=user_input,
                 messages=conversation,
-                stream=not no_stream,
+                stream=should_stream,
                 web_search=web_search,
                 temperature=temperature,
                 top_p=top_p,
@@ -508,9 +689,12 @@ def interactive_chat_session(client, web_search=False, no_stream=False, temperat
                 assistant_message = {"role": "assistant", "content": response}
                 conversation.append(assistant_message)
                 
-                # Print response if not streamed
-                if no_stream:
-                    print(response)
+                # Print response if not streamed (either due to no_stream or prettify)
+                if no_stream or prettify:
+                    if prettify:
+                        prettify_markdown(response, renderer)
+                    else:
+                        print(response)
                 
                 # Log assistant response if logging is enabled
                 if log_handle:
@@ -567,6 +751,7 @@ def main():
     config_group.add_argument('--show-config', action='store_true', help='Show the current configuration(s) and exit')
     config_group.add_argument('--all', action='store_true', help='Show details for all configurations (requires --show-config)')
     config_group.add_argument('--list-models', action='store_true', help='List all available models for the current configuration and exit')
+    config_group.add_argument('--list-renderers', action='store_true', help='Show available markdown renderers for use with --prettify')
     
     # Global options
     global_group = parser.add_argument_group('Global Options')
@@ -587,6 +772,10 @@ def main():
                       help='Set filepath to log conversation to (For interactive modes)')
     global_group.add_argument('--preprompt', 
                       help='Set custom system prompt to control AI behavior')
+    global_group.add_argument('--prettify', action='store_const', const='auto',
+                      help='Render markdown responses and code with syntax highlighting and formatting')
+    global_group.add_argument('--renderer', choices=['auto', 'rich', 'glow'], default='auto',
+                      help='Select which markdown renderer to use with --prettify (auto, rich, or glow)')
     
     # Mode flags (mutually exclusive)
     mode_group = parser.add_argument_group('Modes (mutually exclusive)')
@@ -608,6 +797,11 @@ def main():
     # Validate --all usage
     if args.all and not args.show_config:
         parser.error("--all can only be used with --show-config")
+    
+    # Handle --renderers flag to show available markdown renderers
+    if args.list_renderers:
+        show_available_renderers()
+        return
     
     # Check for mutual exclusivity between --config-index and --provider
     if args.config_index != 0 and args.provider:
@@ -808,6 +1002,17 @@ def main():
     if not args.show_config and not args.list_models and not check_config(active_config):
         return
     
+    # Check if --prettify is used but no markdown renderer is available
+    # This will warn the user immediately if they request prettify but don't have the tools
+    has_renderer = True
+    if args.prettify:
+        has_renderer = warn_if_no_markdown_renderer(args.renderer)
+        if not has_renderer:
+            # Set a flag to disable prettify since we already warned the user
+            print(f"{COLORS['yellow']}Continuing without markdown rendering.{COLORS['reset']}")
+            show_available_renderers()
+            args.prettify = False
+        
     # Initialize client using the potentially overridden active_config
     client = NGPTClient(**active_config)
     
@@ -834,7 +1039,7 @@ def main():
             # Interactive chat mode
             interactive_chat_session(client, web_search=args.web_search, no_stream=args.no_stream,
                                    temperature=args.temperature, top_p=args.top_p, 
-                                   max_tokens=args.max_tokens, log_file=args.log, preprompt=args.preprompt)
+                                   max_tokens=args.max_tokens, log_file=args.log, preprompt=args.preprompt, prettify=args.prettify, renderer=args.renderer)
         elif args.shell:
             if args.prompt is None:
                 try:
@@ -888,7 +1093,13 @@ def main():
                                               temperature=args.temperature, top_p=args.top_p,
                                               max_tokens=args.max_tokens)
             if generated_code:
-                print(f"\nGenerated code:\n{generated_code}")
+                if args.prettify:
+                    # Format code as markdown with proper syntax highlighting
+                    markdown_code = f"```{args.language}\n{generated_code}\n```"
+                    print("\nGenerated code:")
+                    prettify_markdown(markdown_code, args.renderer)
+                else:
+                    print(f"\nGenerated code:\n{generated_code}")
             
         elif args.text:
             if args.prompt is not None:
@@ -1006,12 +1217,24 @@ def main():
                     {"role": "system", "content": args.preprompt},
                     {"role": "user", "content": prompt}
                 ]
+            
+            # If prettify is enabled, we need to disable streaming to collect the full response
+            should_stream = not args.no_stream and not args.prettify
+            
+            # If prettify is enabled with streaming, inform the user
+            if args.prettify and not args.no_stream:
+                print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
                 
-            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
+            response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
                                max_tokens=args.max_tokens, messages=messages)
-            if args.no_stream and response:
-                print(response)
+            
+            # Handle non-stream response (either because no_stream was set or prettify forced it)
+            if (args.no_stream or args.prettify) and response:
+                if args.prettify:
+                    prettify_markdown(response, args.renderer)
+                else:
+                    print(response)
             
         else:
             # Default to chat mode
@@ -1032,12 +1255,24 @@ def main():
                     {"role": "system", "content": args.preprompt},
                     {"role": "user", "content": prompt}
                 ]
+            
+            # If prettify is enabled, we need to disable streaming to collect the full response
+            should_stream = not args.no_stream and not args.prettify
+            
+            # If prettify is enabled with streaming, inform the user
+            if args.prettify and not args.no_stream:
+                print(f"{COLORS['yellow']}Note: Streaming disabled to enable markdown rendering.{COLORS['reset']}")
                 
-            response = client.chat(prompt, stream=not args.no_stream, web_search=args.web_search,
+            response = client.chat(prompt, stream=should_stream, web_search=args.web_search,
                                temperature=args.temperature, top_p=args.top_p,
                                max_tokens=args.max_tokens, messages=messages)
-            if args.no_stream and response:
-                print(response)
+            
+            # Handle non-stream response (either because no_stream was set or prettify forced it)
+            if (args.no_stream or args.prettify) and response:
+                if args.prettify:
+                    prettify_markdown(response, args.renderer)
+                else:
+                    print(response)
     
     except KeyboardInterrupt:
         print("\nOperation cancelled by user. Exiting gracefully.")

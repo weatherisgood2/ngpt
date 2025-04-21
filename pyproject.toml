@@ -1,6 +1,6 @@
 [project]
 name = "ngpt"
-version = "2.4.0"
+version = "2.5.0"
 description = "A lightweight Python CLI and library for interacting with OpenAI-compatible APIs, supporting both official and self-hosted LLM endpoints."
 authors = [
     {name = "nazDridoy", email = "nazdridoy399@gmail.com"},
@@ -8,6 +8,7 @@ authors = [
 dependencies = [
     "requests>=2.31.0",
     "prompt_toolkit>=3.0.0",
+    "rich>=14.0.0",
 ]
 requires-python = ">=3.8"
 readme = "README.md"
@@ -33,6 +34,9 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Intended Audience :: System Administrators",
 ]
+
+[project.optional-dependencies]
+prettify = ["rich>=10.0.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/nazdridoy/ngpt"
